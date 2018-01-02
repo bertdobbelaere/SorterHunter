@@ -3,13 +3,14 @@ An evolutionary approach to find small and low latency sorting networks
 
 ## About
 SorterHunter is a C++ program used to find well performing sorting networks.
-For a number of input sizes, the method used by the program succeeded in reducing the upper bound of S(n) compared to previous work. (Definition: see "The Art of Computer Programming Vol. 3 - Sorting and Searching" - D.E. Knuth, 1998)
+For a number of input sizes, the method used by the program succeeded in reducing the upper bound of &Scirc;(n) compared to previous work. (Definition: see "The Art of Computer Programming Vol. 3 - Sorting and Searching" - D.E. Knuth, 1998)
 
-n  | S(n) previous upper bound | S(n) new upper bound
+n  | &Scirc;(n) previous upper bound | &Scirc;(n) new upper bound
 --  | ------------------------- | --------------------
 19 | 86 (*) | 85
 20 | 92 (*) | 91
 21 | 102 (*) | 101
+22 | 108 (*) | 107
 23 | 118 (*) | 116
 24 | 123 (*) | 121
 28 | 156 (*) | 155
@@ -43,6 +44,7 @@ The "regular" mutations are:
 4. Cross the I/O lines of two CEs at random positions in list
 5. Swap neighbouring CEs that share a connection
 6. Change 1 connection of a random CE
+
 The mutations are accepted on condition that the mutant sorting network is valid. This is determined by applying the test vectors mentioned before.
 An infrequent modification is the insertion of a random CE at a random position in the list. The "uphill" change allows the algorithm to escape from local minima. 
 #### Reporting results
