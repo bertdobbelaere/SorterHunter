@@ -17,8 +17,12 @@ n  | S(n) previous upper bound | S(n) new upper bound
 26 | 140 (*) | 139
 28 | 156 (*) | 155
 
-Above results were obtained while keeping also the depth (i.e. number of parallel operation steps) low. I committed the program to the public domain as inspiration source for further improvements on the subject of sorting networks.
-A list of best performing networks for input sizes up to 32 (as far as known by the author) can be found [here](http://users.telenet.be/bertdobbelaere/SorterHunter/sorting_networks.html)
+Above results were obtained while keeping also the depth (i.e. number of parallel operation steps) low. 
+
+Moreover, for 25 and 26 inputs, the program was able to reduce the optimal depth upper bound from 14 to 13 layers.
+
+I committed the program to the public domain as inspiration source for further improvements on the subject of sorting networks.
+A list of best performing networks for input sizes up to 32 (as far as known by the author) can be found [here](http://users.telenet.be/bertdobbelaere/SorterHunter/sorting_networks.html).
 
 (*) Ref: "Using Symmetry and Evolutionary Search to Minimize Sorting Networks", Valsalam&Miikkulainen, 2013.
 
