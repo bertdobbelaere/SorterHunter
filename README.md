@@ -7,6 +7,7 @@ For a number of input sizes, the method used by the program succeeded in reducin
 
 n  | S(n) previous upper bound | S(n) new upper bound
 --  | ------------------------- | --------------------
+18 | 78 (*) | 77
 19 | 86 (*) | 85
 20 | 92 (*) | 91
 21 | 102 (*) | 100
