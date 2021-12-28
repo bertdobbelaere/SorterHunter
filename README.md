@@ -23,7 +23,7 @@ Above results were obtained while keeping also the depth (i.e. number of paralle
 Moreover, for 25 and 26 inputs, the program was able to reduce the optimal depth upper bound from 14 to 13 layers.
 
 I committed the program to the public domain as inspiration source for further improvements on the subject of sorting networks.
-A list of best performing networks for input sizes up to 32 (as far as known by the author) can be found [here](http://users.telenet.be/bertdobbelaere/SorterHunter/sorting_networks.html).
+A list of best performing networks for input sizes up to 32 (as far as known by the author) can be found [here](https://htmlpreview.github.io/?https://github.com/bertdobbelaere/SorterHunter/blob/master/sorting_networks.html).
 
 (*) Ref: "Using Symmetry and Evolutionary Search to Minimize Sorting Networks", Valsalam&Miikkulainen, 2013.
 
