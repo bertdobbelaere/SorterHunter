@@ -10,12 +10,13 @@ n  | S(n) previous upper bound | S(n) new upper bound
 18 | 78 (*) | 77
 19 | 86 (*) | 85
 20 | 92 (*) | 91
-21 | 102 (*) | 100
+21 | 102 (*) | 99
 22 | 108 (*) | 107
-23 | 118 (*) | 115
+23 | 118 (*) | 114
 24 | 123 (*) | 120
-25 | 133 (*) | 132
+25 | 133 (*) | 131
 26 | 140 (*) | 139
+27 | 150 (*) | 148
 28 | 156 (*) | 155
 
 Above results were obtained while keeping also the depth (i.e. number of parallel operation steps) low. 
