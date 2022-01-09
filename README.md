@@ -19,17 +19,18 @@ n  | S(n) previous upper bound | S(n) new upper bound
 27 | 150 (*) | 148
 28 | 156 (*) | 155
 
-Above results were obtained while keeping also the depth (i.e. number of parallel operation steps) low. 
+The results above were obtained while keeping also the depth (i.e. number of parallel operation steps) low. 
 
 Moreover, for 25 and 26 inputs, the program was able to reduce the optimal depth upper bound from 14 to 13 layers.
 
 I committed the program to the public domain as inspiration source for further improvements on the subject of sorting networks.
-A list of best performing networks for input sizes up to 32 (as far as known by the author) can be found [here](https://htmlpreview.github.io/?https://github.com/bertdobbelaere/SorterHunter/blob/master/sorting_networks.html).
+
+See the [list of best performing sorting networks](https://htmlpreview.github.io/?https://github.com/bertdobbelaere/SorterHunter/blob/master/sorting_networks.html) for a compilation of smallest and fastest networks with up to 32 inputs (as far as known by the author), together with the known bounds in depth and size.
 
 (*) Ref: "Using Symmetry and Evolutionary Search to Minimize Sorting Networks", Valsalam&Miikkulainen, 2013.
 
 ## The program
-The program is very straightforward to build (just "make") on a Linux machine. It expects *one* command line argument, which is the name of the configuration file to use. An example config file is bundled with the sources. Once initialised the program will enter an endless optimisation loop, printing out any improvements it found to previous results it reported
+The program is very straightforward to build (just "make") on a Linux machine. It expects *one* command line argument, which is the name of the configuration file to use. An example config file is bundled with the sources. Once initialised the program will enter an endless optimisation loop, printing out any improvements it found to previous results it reported. Current version is limited to 32 inputs.
 
 ## Working principles
 After the config file is read, the program works as follows:
