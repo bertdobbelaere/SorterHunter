@@ -873,7 +873,7 @@ Auto generated</td></tr>
 <tr id="VM13"><td>[VM13]</td><td>V. K. Valsalam and R. Miikkulainen. Using symmetry and evolutionary search to minimize sorting networks. Journal of Machine Learning Research, 14:303–331, 2013.</td></tr>
 </table>
 <h3>History</h3>
-<table><tr><td>2022-01-15</td><td>Improved size for 22 inputs.</td></tr>
+<table><tr><td>2022-01-15</td><td>Improved size for 22 inputs. Browser compatibility fix.</td></tr>
 <tr><td>2022-01-09</td><td>Small improvements for 23 and 27 inputs, add OEIS links.</td></tr>
 <tr><td>2022-01-02</td><td>Improved size for 21, 23, 25 and 27 inputs using similarly structured prefix. Small improvements for 22 and 28 inputs.</td></tr>
 <tr><td>2021-12-28</td><td>Small improvement for 19 inputs. Use JavaScript based generation of diagrams. Add reference for size 9 and 10 depth optimality.</td></tr>
@@ -888,7 +888,7 @@ Auto generated</td></tr>
 <tr><td>2018-01-02</td><td>Add improved size for 22 inputs. Add 'bounds' columns to summary table. Small improvements to 17, 21 and 22 input combinations.</td></tr>
 <tr><td>2017-12-27</td><td>Initial draft list</td></tr>
 </table>
-<p>Page updated on Sat Jan 15 11:43:07 2022</p>
+<p>Page updated on Sat Jan 15 17:25:47 2022</p>
 <p>See <a href="https://github.com/bertdobbelaere/SorterHunter">SorterHunter</a> repo for previous versions.</p>
 
 <script>
@@ -932,12 +932,12 @@ function generateSVG(el) {
 	let lines=txtval.split("]")
 	let out="", layers=[], ninputs=0
 	for (let l of lines){
-		let pairs=l.replaceAll("[","").trim().split(")")
+		let pairs=l.replace(/\[/g,"").trim().split(")")
 		if(l.length>=5)
 		{
 		let els=[]
 		for(let p of pairs){
-			let s=p.replaceAll(",(","").replaceAll("(","").split(",")
+			let s=p.replace(/,\(/g,"").replace(/\(/g,"").split(",")
 			if(s.length>1)
 			{
 			let l=parseInt(s[0]), h=parseInt(s[1])
