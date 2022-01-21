@@ -25,7 +25,7 @@ Moreover, for 25 and 26 inputs, the program was able to reduce the optimal depth
 
 I committed the program to the public domain as inspiration source for further improvements on the subject of sorting networks.
 
-See the [list of best performing sorting networks](https://htmlpreview.github.io/?https://github.com/bertdobbelaere/SorterHunter/blob/master/sorting_networks.html) for a compilation of smallest and fastest networks with up to 32 inputs (as far as known by the author), together with the known bounds in depth and size.
+See the [list of best performing sorting networks](https://bertdobbelaere.github.io/sorting_networks.html) for a compilation of smallest and fastest networks with up to 32 inputs (as far as known by the author), together with the known bounds in depth and size.
 
 (*) Ref: "Using Symmetry and Evolutionary Search to Minimize Sorting Networks", Valsalam&Miikkulainen, 2013.
 
