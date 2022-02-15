@@ -19,19 +19,22 @@ n  | S(n) previous upper bound | S(n) new upper bound
 27 | 150 (*) | 148
 28 | 156 (*) | 155
 29 | 165 | 164
+33 | 201 | 199
+34 | 211 | 210
 
 The results above were obtained while keeping also the depth (i.e. number of parallel operation steps) low. 
 
-Moreover, for 25 and 26 inputs, the program was able to reduce the optimal depth upper bound from 14 to 13 layers.
+For 25 and 26 inputs, the program was able to reduce the optimal depth upper bound from 14 to 13 layers. A similar reduction to 15 layers was achieved for 34 inputs.
 
 I committed the program to the public domain as inspiration source for further improvements on the subject of sorting networks.
 
 See the [list of best performing sorting networks](https://bertdobbelaere.github.io/sorting_networks.html) for a compilation of smallest and fastest networks with up to 32 inputs (as far as known by the author), together with the known bounds in depth and size.
+See the [extended list of sorting networks](https://bertdobbelaere.github.io/sorting_networks_extended.html) for an early version extension of this list to 64 inputs. 
 
 (*) Ref: "Using Symmetry and Evolutionary Search to Minimize Sorting Networks", Valsalam&Miikkulainen, 2013.
 
 ## The program
-The program is very straightforward to build (just "make") on a Linux machine. It expects *one* command line argument, which is the name of the configuration file to use. An example config file is bundled with the sources. Once initialised the program will enter an endless optimisation loop, printing out any improvements it found to previous results it reported. Current version is limited to 32 inputs.
+The program is very straightforward to build (just "make") on a Linux machine. It expects *one* command line argument, which is the name of the configuration file to use. An example config file is bundled with the sources. Once initialised the program will enter an endless optimisation loop, printing out any improvements it found to previous results it reported. Current version is limited to 64 inputs.
 
 ## Working principles
 After the config file is read, the program works as follows:
@@ -56,6 +59,6 @@ The "regular" mutations are:
 6. Change 1 connection of a random CE
 
 The mutations are accepted on condition that the mutant sorting network is valid. This is determined by applying the test vectors mentioned before.
-An infrequent modification is the insertion of a random CE at a random position in the list. The "uphill" change allows the algorithm to escape from local minima. 
+An infrequent modification is the insertion of a duplicate or random CE at a random position in the list. The "uphill" change allows the algorithm to escape from local minima. 
 #### Reporting results
 Users of sorting networks are interested in low size, low depth but maybe also in trade-offs between them. To satisfy all, the program uses an *orthogonal convex hull* approach that keeps track of all (size,depth) pairs that are not outperformed by other networks.

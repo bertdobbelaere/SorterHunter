@@ -3,7 +3,7 @@
  * @brief Config file reading service for SorterHunter
  * @author Bert Dobbelaere bert.o.dobbelaere[at]telenet[dot]be
  *
- * Copyright (c) 2017 Bert Dobbelaere
+ * Copyright (c) 2022 Bert Dobbelaere
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -35,7 +35,7 @@
 
 using std::string;
 
-typedef std::map<string, u32> U32Map; ///< key/value pairs for integer parameters
+typedef std::map<string,uint64_t> IntMap; ///< key/value pairs for integer parameters
 typedef std::map<string,Network_t> NetworkMap; ///< key/value pairs for network parameters
 
 /**
@@ -45,9 +45,9 @@ class ConfigParser::Data{
 	public:
 		void clear();
 		bool addKeyValue(string key, string value, u32 linenr);
-		bool verifyNumKey(string key,u32 minval,u32 maxval) const;
+		bool verifyNumKey(string key,uint64_t minval,uint64_t maxval) const;
 		/* Data members (public) */
-		U32Map u32map; ///< key/value pairs for integer parameters
+		IntMap intmap; ///< key/value pairs for integer parameters
 		NetworkMap networkmap; ///< key/value pairs for network parameters
 	private:
 		bool addKeyNetworkValue(string key, string value, u32 linenr); 
@@ -82,10 +82,14 @@ static string stripline(string l)
  * @param result Converted integer
  * @return true on success
  */
-static bool value2u32(string s, u32 &result)
+static bool value2u64(string s, uint64_t &result)
 {
 	char dummy;
-	return sscanf(s.c_str(),"%u%c",&result,&dummy)==1u;
+	int rv;
+	unsigned long long x=0;
+	rv= sscanf(s.c_str(),"%llu%c",&x,&dummy);
+	result=x;
+	return rv==1;
 }
 
 
@@ -94,7 +98,7 @@ static bool value2u32(string s, u32 &result)
  */
 void ConfigParser::Data::clear()
 {
-	u32map.clear();
+	intmap.clear();
 	networkmap.clear();
 }
 
@@ -108,20 +112,20 @@ void ConfigParser::Data::clear()
 
 bool ConfigParser::Data::addKeyValue(string key, string value, u32 linenr)
 {
-	if((key=="FixedPrefix")||(key=="InitialNetwork"))
+	if((key=="FixedPrefix") || (key=="InitialNetwork") || (key=="Postfix"))
 	{
 		/* For these two keys, delegate further processing to network value handler */
 		return addKeyNetworkValue(key,value,linenr);
 	}
 	
-	if(u32map.find(key)!=u32map.end())
+	if(intmap.find(key)!=intmap.end())
 	{
 		printf("Duplicate key '%s' in config file, line %u\n",key.c_str(),linenr);
 		return false;
 	}
 	
-	u32 numval;
-	bool ok=value2u32(value,numval);
+	uint64_t numval;
+	bool ok=value2u64(value,numval);
 	if(!ok)
 	{
 		printf("Numeric rvalue expected in config file, line %u\n",linenr);
@@ -129,7 +133,7 @@ bool ConfigParser::Data::addKeyValue(string key, string value, u32 linenr)
 	}
 	else
 	{
-		u32map.insert(std::pair<string,u32>(key,numval));
+		intmap.insert(std::pair<string,uint64_t>(key,numval));
 		return true;
 	}
 }
@@ -152,7 +156,7 @@ bool ConfigParser::Data::addKeyNetworkValue(string key, string value, u32 linenr
 	Network_t network;
 	u32 state=0; // 0: scan for '(' / 1: scan for inner ',' / 2: scan for ')' / 3: scan for outer ',' / 100: error
 	size_t tokenstart;
-	u32 p1,p2;
+	uint64_t p1,p2;
 	for(size_t idx=0;idx<value.size();idx++)
 	{
 		char c=value[idx];
@@ -172,7 +176,7 @@ bool ConfigParser::Data::addKeyNetworkValue(string key, string value, u32 linenr
 			case 1:
 				if(c==',')
 				{
-					bool ok=value2u32(stripline(value.substr(tokenstart,idx-tokenstart)),p1);
+					bool ok=value2u64(stripline(value.substr(tokenstart,idx-tokenstart)),p1);
 					state=ok ? 2: 100;
 					tokenstart=idx+1;
 				}
@@ -180,7 +184,7 @@ bool ConfigParser::Data::addKeyNetworkValue(string key, string value, u32 linenr
 			case 2:
 				if(c==')')
 				{
-					bool ok=value2u32(stripline(value.substr(tokenstart,idx-tokenstart)),p2);
+					bool ok=value2u64(stripline(value.substr(tokenstart,idx-tokenstart)),p2);
 					state=ok ? 3: 100;
 					if(ok && (p1<=255) && (p2<=255))
 					{
@@ -223,18 +227,18 @@ bool ConfigParser::Data::addKeyNetworkValue(string key, string value, u32 linenr
  * @param maxval Maximum expected value (inclusive)
  * @return true If present and within range
  */
-bool ConfigParser::Data::verifyNumKey(string key,u32 minval,u32 maxval) const
+bool ConfigParser::Data::verifyNumKey(string key, uint64_t minval, uint64_t maxval) const
 {
-	U32Map::const_iterator it=u32map.find(key);
-	if(it==u32map.end())
+	IntMap::const_iterator it=intmap.find(key);
+	if(it==intmap.end())
 	{
 		printf("Missing mandatory key '%s' in config file.\n",key.c_str());
 		return false;
 	}
-	u32 val= it->second;
+	uint64_t val= it->second;
 	if((val<minval)||(val>maxval))
 	{
-		printf("Value for key '%s' should be in range %u..%u (was %u)\n",key.c_str(),minval, maxval, val);
+		printf("Value for key '%s' should be in range %llu..%llu (was %llu)\n",key.c_str(),(unsigned long long)minval, (unsigned long long)maxval, (unsigned long long)val);
 		return false;
 	}
 	return true;
@@ -280,16 +284,17 @@ bool ConfigParser::parseConfig(const char *filename)
  
     infile.close();
     
+    /* Limits of mandatory numeric keys*/
     fileok = fileok && data->verifyNumKey("Ninputs",2,NMAX);
     fileok = fileok && data->verifyNumKey("Symmetric",0,1);
 	
 	return fileok;
 }
 
-u32 ConfigParser::getU32(string key, u32 defaultval) const
+uint64_t ConfigParser::getInt(string key, uint64_t defaultval) const
 {
-	U32Map::const_iterator it=data->u32map.find(key);
-	if(it==data->u32map.end())
+	IntMap::const_iterator it=data->intmap.find(key);
+	if(it==data->intmap.end())
 	{
 		return defaultval;
 	}

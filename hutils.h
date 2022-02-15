@@ -3,7 +3,7 @@
  * @brief Various utility functions for SorterHunter program
  * @author Bert Dobbelaere bert.o.dobbelaere[at]telenet[dot]be
  *
- * Copyright (c) 2017 Bert Dobbelaere
+ * Copyright (c) 2022 Bert Dobbelaere
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -30,6 +30,7 @@
 #define _HUTILS_H_
 
 #include "htypes.h"
+#include <random>
 
 inline u32 min(u32 x,u32 y) { return (x<y)?x:y;} ///< Classic minimum
 inline u32 max(u32 x,u32 y) { return (x>y)?x:y;} ///< Classic maximum
@@ -63,12 +64,15 @@ void printnw(const Network_t &nw);
  * @param nw2 Second network
  * @param result [OUT] Concatenation of both networks
  */
-void concat(const Network_t &nw1, const Network_t &nw2, Network_t &result);
+void concatNetwork(const Network_t &nw1, const Network_t &nw2, Network_t &result);
 
 
-#define RANDIDX(v) (random()%(v.size()))    ///< Random index from vector
-#define RANDELEM(v) (v[RANDIDX(v)])         ///< Random element from vector
-#define ARRSIZE(a) (sizeof(a)/sizeof(a[0])) ///< Array size of C array
+/**
+ * Append one network to another
+ * @param dst Network to be modified
+ * @param src Network to be appended
+ */
+void appendNetwork(Network_t &dst, const Network_t &src);
 
 
 /** 
@@ -90,5 +94,11 @@ private:
 	std::vector<OCH_Entry> och;
 };
 
+// Random generation defs
+
+typedef std::mt19937_64 RandGen_t;
+
+#define RANDIDX(v) (mtRand()%v.size())      ///< Random index from vector
+#define RANDELEM(v) (v[RANDIDX(v)])         ///< Random element from vector
 
 #endif

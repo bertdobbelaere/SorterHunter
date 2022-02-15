@@ -3,7 +3,7 @@
  * @brief Config file reading service for SorterHunter
  * @author Bert Dobbelaere bert.o.dobbelaere[at]telenet[dot]be
  *
- * Copyright (c) 2017 Bert Dobbelaere
+ * Copyright (c) 2022 Bert Dobbelaere
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -57,7 +57,7 @@ class ConfigParser
 		 * @param defaultval Default value if parameter was not found
 		 * @return Parameter value
 		 */
-		u32 getU32(std::string key, u32 defaultval=0) const;
+		uint64_t getInt(std::string key, uint64_t defaultval=0) const;
 		
 		/**
 		 * Reads a parameter containing sorting network pairs from the config file

@@ -1,5 +1,5 @@
 # makefile for SorterHunter program. Kept very simple.
-# Tested with g++ 5.4.0 and clang++ 3.8.0
+# Tested with g++ 9.3.0 and clang++ 10.0.0
 
 CXX=g++
 CXXFLAGS= -O4 -Wall

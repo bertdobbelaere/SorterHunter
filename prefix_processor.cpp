@@ -3,7 +3,7 @@
  * @brief Network prefix related operations for SorterHunter program
  * @author Bert Dobbelaere bert.o.dobbelaere[at]telenet[dot]be
  *
- * Copyright (c) 2017 Bert Dobbelaere
+ * Copyright (c) 2022 Bert Dobbelaere
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <cstdio>
 #include <cassert>
+
+extern u32 Verbosity;
 
 /**
  * Replaces a *sorted* list of patterns applied to a network containing a single CE by the sorted list of output patterns of that network.
@@ -307,7 +309,7 @@ SortWord_t ClusterGroup::outputSize() const
 	}
 	
 #if 1
-	if(prod==0) // Special case for N=32 in 32 bit word, avoiding wrap-around to 0 (dirty hack for efficiency reasons as 64 bit SortWord_t would use twice the memory)
+	if(prod==0) // Special case for N=NMAX, dirty hack avoiding wrap-around to 0 of empty network: set size to one less.
 		prod-=1;
 #endif
 	
@@ -327,14 +329,59 @@ void computePrefixOutputs(u8 ninputs, const Network_t &prefix, SinglePatternList
 	cg.computeOutputs(patterns);
 }
 
+/**
+ * For symmetric networks, any network that sorts a pattern successfully will also sort the reverse of the inverse,
+ * i.e. if a symmetric network sorts '00101111', if will also sort '00001011'
+ * This function is used to discard the largest of those patterns.
+ */
+static bool hasSmallerMirror(u8 ninputs, SortWord_t w)
+{
+	SortWord_t rw=0u;
+	SortWord_t tmp=w;
+	for(u32 k=0;k<ninputs;k++)
+	{
+		rw <<= 1;
+		rw |= ~tmp & 1u;
+		tmp >>= 1;
+	}
+	return w > rw;
+}
 
-void convertToBitParallel(u8 ninputs, const SinglePatternList_t &singles, BitParallelList_t &parallels)
+
+static SortWord_t all_n_inputs_mask; ///< ninputs lowest bit to be set
+
+static bool isSorted(u8 ninputs, SortWord_t w)
+{
+	w = ~w & all_n_inputs_mask;
+	return (w&(w+1)) == 0;
+}
+
+
+void convertToBitParallel(u8 ninputs, const SinglePatternList_t &singles, bool use_symmetry, BitParallelList_t &parallels)
 {
 	u32 level=0;
 	static BPWord_t buffer[NMAX];
+	parallels.clear();
+	
+	all_n_inputs_mask = 0ULL;
+	for(u32 k=0;k<ninputs;k++)
+	{
+		all_n_inputs_mask |= 1ULL << k;
+	}
+	
 	for(size_t idx=0;idx<singles.size();idx++)
 	{
 		SortWord_t w=singles[idx];
+		if(use_symmetry && hasSmallerMirror(ninputs, w))
+		{
+			continue; // Complement of reverse word is smaller, skip this vector if the network is symmetric
+		}
+		
+		if(isSorted(ninputs, w))
+		{
+			continue; // Already sorted pattern will not be affected by sorting operation - useless as test vector
+		}
+		
 		for(u32 b=0;b<ninputs;b++)
 		{
 			buffer[b]<<=1;
@@ -360,7 +407,11 @@ void convertToBitParallel(u8 ninputs, const SinglePatternList_t &singles, BitPar
 			parallels.push_back(buffer[b]);
 		}
 	}
-	
+
+	if(Verbosity > 2)
+	{
+		printf("Debug: Pattern conversion: %lu single inputs -> %lu parallel words (%u * %lu) (symmetry:%d)\n", singles.size(), parallels.size(), ninputs, parallels.size()/ninputs, use_symmetry);
+	}
 }
 
 static Network_t alphabet; ///< "Alphabet" of possible CEs defined by their vertical positions.
@@ -387,20 +438,20 @@ static void initAlphabet(u8 ninputs, bool use_symmetry)
 		}
 }		
 
-SortWord_t createGreedyPrefix(u8 ninputs, u32 maxpairs, bool use_symmetry, u32 /*append_depth*/, Network_t &prefix)
+SortWord_t createGreedyPrefix(u8 ninputs, u32 maxpairs, bool use_symmetry, Network_t &prefix, RandGen_t &rndgen)
 {
 	ClusterGroup cg(ninputs);
 	initAlphabet(ninputs, use_symmetry);
-	SortWord_t currentsize = cg.outputSize();
 
 	for(size_t k=0;k<prefix.size();k++)
 		cg.preSort(prefix[k]);
+	SortWord_t currentsize = cg.outputSize();
 	
 	while((prefix.size() < maxpairs) || (use_symmetry && (prefix.size()<(maxpairs-1))))
 	{
 		Network_t ashuf = alphabet;
 		Pair_t best= {0,1};
-		std::random_shuffle(ashuf.begin(),ashuf.end());
+		std::shuffle(ashuf.begin(),ashuf.end(), rndgen);
 		SortWord_t minsize = currentsize;
 
 		ClusterGroup cgbest=cg;
@@ -416,10 +467,6 @@ SortWord_t createGreedyPrefix(u8 ninputs, u32 maxpairs, bool use_symmetry, u32 /
 			}
 			SortWord_t newsize = cgnew.outputSize();
 			SortWord_t futuresize = newsize;
-#if 0 // Currently not used			
-			if(append_depth>0)
-				futuresize=computeFutureSize(ninputs, cgnew, ashuf, use_symmetry, append_depth);
-#endif			
 			if(futuresize<minfuturesize)
 			{
 				minsize=newsize;

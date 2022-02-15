@@ -4,7 +4,7 @@
  * @author Bert Dobbelaere bert.o.dobbelaere[at]telenet[dot]be
  * Handles symmetrical and asymmetrical sorting networks, with or without predefined or "greedy" prefix.
  * 
- * Copyright (c) 2017 Bert Dobbelaere
+ * Copyright (c) 2022 Bert Dobbelaere
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -28,7 +28,7 @@
  */
 
 
-#define VERSION "SorterHunter_V0.1"
+#define VERSION "SorterHunter_V0.3"
 
 #include "htypes.h"
 #include "hutils.h"
@@ -39,7 +39,7 @@
 #include <string.h>
 #include <vector>
 #include <algorithm>
-#include <ctime>
+#include <random>
 #include "ConfigParser.h"
 
 #include "prefix_processor.h"
@@ -47,21 +47,25 @@
 ConfigParser cp;
 
 bool use_symmetry = true; ///< Treat sorting network as symmetric or not
+bool force_valid_uphill_step = true; ///< "Uphill" step inserts duplicate CE if not in final layer.
 u8 N=0;                   ///< Problem dimension, i.e. number of inputs to be sorted
-u32 EscapeRate=0;         ///< Adds a random pair and its symmetric complement every x iterations
+u32 EscapeRate=0;         ///< Adds a random pair (and its symmetric complement for symmetric networks) every x iterations
 u32 MaxMutations=1;       ///< Maximum allowed number of mutations in evolution step
 u32 PrefixType=0;         ///< Type of prefix used (0=none, 1=fixed, 2=greedy)
 Network_t FixedPrefix;    ///< Fixed prefix to use (if applicable)
 Network_t InitialNetwork; ///< Initial starting point of network
 u32 GreedyPrefixSize=0;   ///< Size of greedy prefix (if applicable)
 OCH_t conv_hull;          ///< "Best performing" network list found so far
-u32 RandomSeed;           ///< Random seed
+uint64_t RandomSeed;      ///< Random seed
+uint64_t RestartRate;     ///< Return to initial conditions each ... iterations (0=never)
+u32 Verbosity=1;          ///< Overall verbosity level: 0:minimal, 1:moderate, 2:high, >2:debug        
 
 // Working set of pairs in the sorting network
-Network_t pairs;
+Network_t pairs; ///< Current core network: evolving section between prefix and postfix. For symmetric networks, mirrored pair (if not coinciding) is omitted.
 Network_t se; ///< Symmetrical expansion of current network
 Network_t newpairs;
-Network_t prefix;
+Network_t prefix; ///< Fixed, greedy, hybrid or empty prefix network
+Network_t postfix; ///< Fixed or empty postfix network
 
 // Set of all possible pairs, unique taking into account symmetric complements
 Network_t alphabet;
@@ -69,6 +73,10 @@ Network_t alphabet;
 #define NMUTATIONTYPES 6 ///< Number of different mutation types
 u32 mutation_type_weights[NMUTATIONTYPES]; ///< Relative probabilities for each mutation type
 std::vector<u8> mutationSelector; ///< Helper variable to quickly pick a mutation with the requested probability.
+
+// Random generation
+std::random_device rd;
+RandGen_t mtRand(rd()); // Mersenne twister is a rather good PRNG. Seeding quality varies between systems, but OK ; this is no crypto application.
 
 
 /**
@@ -84,9 +92,10 @@ std::vector<u8> mutationSelector; ///< Helper variable to quickly pick a mutatio
  * @param data Input/output vectors
  * @param nw Network to be tested
  */
-void applyBitParallelSort(BPWord_t data[], const Network_t nw)
+void applyBitParallelSort(BPWord_t data[], const Network_t &nw)
 {
-	for(size_t n=0;n<nw.size();n++)
+	size_t l=nw.size();
+	for(size_t n=0;n<l;n++)
 	{
 		u32 i=nw[n].lo;
 		u32 j=nw[n].hi;
@@ -108,12 +117,14 @@ BitParallelList_t parallelpatterns_from_prefix;
  */
 void prepareTestVectorsFromPrefix(const Network_t &prefix)
 {
+	bool is_even = ((N%2)==0);
+	
 	SinglePatternList_t singles;
 	computePrefixOutputs(N, prefix, singles);
 
-	std::random_shuffle(singles.begin(),singles.end());
+	std::shuffle(singles.begin(),singles.end(), mtRand); // Shuffle test vectors: improve probability of early rejection of non-sorters
 
-	convertToBitParallel(N, singles, parallelpatterns_from_prefix);
+	convertToBitParallel(N, singles, use_symmetry && is_even, parallelpatterns_from_prefix);
 }
 
 /**
@@ -143,7 +154,7 @@ void initalphabet()
  * @param bpl List of test vectors matching the prefix
  * @return true if prefix+pairs form a valid sorter
  */
-bool testpairsFromPrefixOutput(const Network_t pairs, const BitParallelList_t &bpl)
+bool testpairsFromPrefixOutput(const Network_t &pairs, const BitParallelList_t &bpl)
 {
 	size_t idx=0;
 	
@@ -166,6 +177,27 @@ bool testpairsFromPrefixOutput(const Network_t pairs, const BitParallelList_t &b
 	return true;
 }
 
+
+/**
+ * Filter a network to obtain only the pairs that are in range 0..ninputs-1 and properly sorted
+ * @param nw input network
+ * @param ninputs Number of inputs
+ * @return Filtered input network
+ */
+static const Network_t copyValidPairs(const Network_t &nw, u32 ninputs)
+{
+	static Network_t result;
+	result.clear();
+	for(Network_t::const_iterator it=nw.begin();it!=nw.end();it++)
+	{
+		if((it->hi < ninputs) && (it->lo < it->hi))
+		{
+			result.push_back( *it);
+		}
+	}
+	return result;
+}
+
 /**
  * Create a prefix network using greedy algorithm A.
  * @param prefix [OUT] generated prefix
@@ -174,8 +206,26 @@ bool testpairsFromPrefixOutput(const Network_t pairs, const BitParallelList_t &b
 void fillprefixGreedyA(Network_t &prefix, u32 npairs )
 {
 	prefix.clear();
-	SortWord_t sizetmp=createGreedyPrefix(N, npairs, use_symmetry, 0, prefix);
-	printf("Greedy prefix size %lu, span %lu.\n",prefix.size(),(size_t)sizetmp);
+	SortWord_t sizetmp=createGreedyPrefix(N, npairs, use_symmetry, prefix, mtRand);
+	if( Verbosity > 1)
+	{
+		printf("Greedy prefix size %lu, span %lu.\n",prefix.size(),(size_t)sizetmp);
+	}
+}
+
+/**
+ * Create a hybrid prefix network using first the fixed prefix, then append elements with greedy algorithm A.
+ * @param prefix [OUT] generated prefix
+ * @param npairs Number of inputs to the network
+ */
+void fillprefixFixedThenGreedyA(Network_t &prefix, u32 npairs )
+{
+	prefix=copyValidPairs(FixedPrefix, N);
+	SortWord_t sizetmp=createGreedyPrefix(N, npairs+prefix.size(), use_symmetry, prefix, mtRand);
+	if( Verbosity > 2)
+	{
+		printf("Hybrid prefix size %lu, span %lu.\n",prefix.size(),(size_t)sizetmp);
+	}
 }
 
 
@@ -266,7 +316,7 @@ u32 attemptMutation(Network_t &newpairs)
 				
 				if ((alo!=blo)&&(alo!=bhi)&&(ahi!=blo)&&(ahi!=bhi))
 				{
-					u32 r2=rand()%2;
+					u32 r2=mtRand()%2;
 					u32 x = r2 ? bhi : blo;
 					u32 y = r2 ? blo : bhi;
 					newpairs[a].lo = min(alo, x);
@@ -289,10 +339,13 @@ u32 attemptMutation(Network_t &newpairs)
 					u8 bhi=newpairs[b].hi;
 					if((blo==alo)||(blo==ahi)||(bhi==alo)||(bhi==ahi))
 					{
-						Pair_t z=newpairs[a];
-						newpairs[a]=newpairs[b];
-						newpairs[b]=z;
-						applied=mtype;
+						if(newpairs[a]!=newpairs[b])
+						{
+							Pair_t z=newpairs[a];
+							newpairs[a]=newpairs[b];
+							newpairs[b]=z;
+							applied=mtype;
+						}
 						break;
 					}
 				}		
@@ -323,23 +376,22 @@ u32 attemptMutation(Network_t &newpairs)
 }
 
 /**
- * Filter a network to obtain only the pairs that are in range 0..ninputs-1 and properly sorted
- * @param nw input network
- * @param ninputs Number of inputs
- * @return Filtered input network
+ * Report sorting network if it is an improved (size,depth) combination
+ * @param nw Valid sorting network
  */
-static const Network_t copyValidPairs(const Network_t &nw, u32 ninputs)
+static void checkImproved(const Network_t &nw)
 {
-	static Network_t result;
-	result.clear();
-	for(Network_t::const_iterator it=nw.begin();it!=nw.end();it++)
+	u32 depth=computeDepth(nw);
+	if(conv_hull.improved(nw.size(),depth))
 	{
-		if((it->hi < ninputs) && (it->lo < it->hi))
+		/* Print only if the sorter is an improved (size,depth) combination */
+		if((Verbosity > 1) || (nw.size() <= ((N*(N-1u))/2u))) // Reduce rubbish listing. Should at least compete with bubble sort before reporting
 		{
-			result.push_back( *it);
+			printf(" {'N':%u,'L':%lu,'D':%u,'sw':'%s','ESC':%u,'Prefix':%lu,'Postfix':%lu,'nw':",N,nw.size(),depth,VERSION,EscapeRate,prefix.size(),postfix.size());
+			printnw(nw); 
+			conv_hull.print();
 		}
 	}
-	return result;
 }
 
 /**
@@ -351,6 +403,7 @@ static void usage()
 	printf("A sample config file containing help text is provided, named 'sample_config.txt'\n");
 	printf("SorterHunter is a program that tries to find efficient sorting networks by applying\n");
 	printf("an evolutionary approach. It is offered under MIT license\n");
+	printf("Program version: %s\n",VERSION);
 	exit(1);
 }
 
@@ -373,26 +426,23 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
-	if(cp.getU32("RandomSeed")!=0u)
+	if(cp.getInt("RandomSeed")!=0u)
 	{
-		RandomSeed=cp.getU32("RandomSeed");
+		RandomSeed=cp.getInt("RandomSeed");
+		mtRand.seed(RandomSeed);
 	}
-	else
-	{
-		RandomSeed=clock()+time(NULL);  
-	}
-	srand(RandomSeed);
 	
-	N=cp.getU32("Ninputs",0);
-	use_symmetry = (cp.getU32("Symmetric")>0u);
-	EscapeRate = cp.getU32("EscapeRate",0);
-	MaxMutations= cp.getU32("MaxMutations",1);
-	mutation_type_weights[0]=cp.getU32("WeigthRemovePair",1);
-	mutation_type_weights[1]=cp.getU32("WeigthSwapPairs",1);
-	mutation_type_weights[2]=cp.getU32("WeigthReplacePair",1);
-	mutation_type_weights[3]=cp.getU32("WeightCrossPairs",1);
-	mutation_type_weights[4]=cp.getU32("WeightSwapIntersectingPairs",1);
-	mutation_type_weights[5]=cp.getU32("WeightReplaceHalfPair",1);
+	N=cp.getInt("Ninputs",0);
+	use_symmetry = (cp.getInt("Symmetric")>0u);
+	force_valid_uphill_step = (cp.getInt("ForceValidUphillStep",1)>0);
+	EscapeRate = cp.getInt("EscapeRate",0);
+	MaxMutations= cp.getInt("MaxMutations",1);
+	mutation_type_weights[0]=cp.getInt("WeigthRemovePair",1);
+	mutation_type_weights[1]=cp.getInt("WeigthSwapPairs",1);
+	mutation_type_weights[2]=cp.getInt("WeigthReplacePair",1);
+	mutation_type_weights[3]=cp.getInt("WeightCrossPairs",1);
+	mutation_type_weights[4]=cp.getInt("WeightSwapIntersectingPairs",1);
+	mutation_type_weights[5]=cp.getInt("WeightReplaceHalfPair",1);
 	for(u32 n=0;n<NMUTATIONTYPES;n++)
 	{
 		for(u32 k=0;k<mutation_type_weights[n];k++)
@@ -403,121 +453,172 @@ int main(int argc, char *argv[])
 		printf("No mutation types selected.\n");
 		exit(1);
 	}
-	PrefixType=cp.getU32("PrefixType",0);
+	PrefixType=cp.getInt("PrefixType",0);
 	FixedPrefix=cp.getNetwork("FixedPrefix");
-	GreedyPrefixSize=cp.getU32("GreedyPrefixSize",0);
-	pairs=copyValidPairs(cp.getNetwork("InitialNetwork"),N);
+	GreedyPrefixSize=cp.getInt("GreedyPrefixSize",0);
+	RestartRate=cp.getInt("RestartRate",0);
+	Verbosity=cp.getInt("Verbosity",1);
+	postfix=cp.getNetwork("Postfix");
 
 	/* Initialize set of CEs to pick from */
 	initalphabet();
 
-	/* Create prefix network */
-	if(PrefixType==1u) // Fixed
+	/* Create initial prefix network */
+	switch(PrefixType)
 	{
-		prefix=copyValidPairs(FixedPrefix, N);
-	}
-	else if(PrefixType==2u) // Greedy algorithm A 
-	{
-		fillprefixGreedyA(prefix, GreedyPrefixSize);
-	}
-
-	printf("Prefix size: %lu\n",prefix.size());
-	
-	/* Prepare a set of test vectors maching the prefix */
-	prepareTestVectorsFromPrefix(prefix);
-
-	// Produce initial solution, simply by adding random pairs until we found a valid network
-	// TODO: Improve this without giving too much direction to the search
-	for(;;)
-	{
-		pairs.push_back( RANDELEM(alphabet) );
-		
-		if(use_symmetry)
-			symmetricExpansion(N, pairs,se);
-		else
-			se=pairs;
-			
-		if(testpairsFromPrefixOutput(se, parallelpatterns_from_prefix))
+		case 1: // Fixed prefix
+			prefix=copyValidPairs(FixedPrefix, N);
+			break;
+		case 2: // Greedy algorithm A 
+			fillprefixGreedyA(prefix, GreedyPrefixSize);
+			break;
+		case 3: // Hybrid prefix
+			fillprefixFixedThenGreedyA(prefix, GreedyPrefixSize);
+			break;
+		default: // No prefix
+			prefix.clear();
 			break;
 	}
 
-	Network_t totalnw;
-	concat(prefix,se,totalnw);
-	u32 depth=computeDepth(totalnw);
-
-	printf("Initial network size: %lu\n",totalnw.size());
-
-	if(conv_hull.improved(totalnw.size(),depth))
+	if(Verbosity > 0)
 	{
-		if(totalnw.size()< ((N*(N-1u))/2u)) // Reduce rubbish listing. Should at least compete with bubble sort...
-		{
-			printf(" {'N':%u,'L':%lu,'D':%u,'sw':'%s','ESC':%u,'FP':%lu,'nw':",N,totalnw.size(),depth,VERSION,EscapeRate,prefix.size());
-			printnw(totalnw); 
-			conv_hull.print();
-		}
+		printf("Prefix size: %lu\n",prefix.size());
 	}
+	
+	/* Prepare a set of test vectors matching the prefix */
+	prepareTestVectorsFromPrefix(prefix);
 
-	u32 nmods;
 
-	for(;;) // Program never ends, keep trying to improve
+	for(;;) // Outer loop - restart from here if restart is triggered (only applies if RestartRate!=0)
 	{
-		/* Determine number of mutations to use in this iteration */
-		if(MaxMutations>1)
-		{
-			nmods=1u+rand()%MaxMutations;
-		}
-		else
-		{
-			nmods=1u;
-		}
-		
-		/* Create a copy of the accepted set of pairs */
-		newpairs=pairs;
-		
-		/* Apply the mutations */
-		u32 modcount=0;
-		while(modcount<nmods)
-		{
-			u32 r=attemptMutation(newpairs);
-			if(r!=0)
-			{
-				modcount++;
-			}
-		}
-		
-		/* Create a symmetric expansion of the modified pairs (or just a copy if non-symmetric network) */
-		if(use_symmetry)
-			symmetricExpansion(N, newpairs,se);
-		else
-			se=newpairs;
-		
-		/* Test whether the new postfix network yields a valid sorter when combined with the prefix */
-		if((se.size()>0) && testpairsFromPrefixOutput(se,parallelpatterns_from_prefix))
-		{
-			Network_t totalnw;
-			concat(prefix,se,totalnw);
-			u32 depth=computeDepth(totalnw);
-			/* Accept the new postfix */
-			pairs=newpairs;
+		pairs=copyValidPairs(cp.getNetwork("InitialNetwork"),N);
 
-			/* Print only if the sorter is an improved (size,depth) combination */
-			if(conv_hull.improved(totalnw.size(),depth))
+		// Produce initial solution, simply by adding random pairs until we found a valid network
+		// TODO: Improve this without giving too much direction to the search
+		for(;;)
+		{
+			if(use_symmetry)
+				symmetricExpansion(N, pairs,se);
+			else
+				se=pairs;
+				
+			appendNetwork(se,postfix);
+			
+			if(testpairsFromPrefixOutput(se, parallelpatterns_from_prefix))
+				break;
+				
+			pairs.push_back( RANDELEM(alphabet) );
+		}
+
+		Network_t totalnw;
+		concatNetwork(prefix,se,totalnw);
+
+		if(Verbosity>1)
+		{
+			printf("Initial network size: %lu\n",totalnw.size());
+		}
+		
+		checkImproved(totalnw);
+
+		for(;;) // Program never ends, keep trying to improve, way may restart in the outer loop however.
+		{
+			/* Determine number of mutations to use in this iteration */
+			u32 nmods=1;
+
+			if(MaxMutations>1)
 			{
-				if(totalnw.size()< ((N*(N-1u))/2u)) // Reduce rubbish listing. Should at least compete with bubble sort...
+				nmods += mtRand()%MaxMutations;
+			}
+			
+			/* Create a copy of the accepted set of pairs */
+			newpairs=pairs;
+			
+			/* Apply the mutations */
+			u32 modcount=0;
+			while(modcount<nmods)
+			{
+				u32 r=attemptMutation(newpairs);
+				if(r!=0)
 				{
-					printf(" {'N':%u,'L':%lu,'D':%u,'sw':'%s','ESC':%u,'FP':%lu,'nw':",N,totalnw.size(),depth,VERSION,EscapeRate,prefix.size());
-					printnw(totalnw); // We found an improvement: (size,depth) unmatched by previous network.
-					conv_hull.print();
+					modcount++;
 				}
 			}
-		}
+			
+			/* Create a symmetric expansion of the modified pairs (or just a copy if non-symmetric network) */
+			if(use_symmetry)
+			{
+				symmetricExpansion(N, newpairs,se);
+			}
+			else
+			{
+				se=newpairs;
+			}
 
-        /* With low probability, add another pair random pair at a random place. Attempt to escape from local optimum. */
-		if((EscapeRate>0) && ((rand()%EscapeRate)==0))
-		{
-			int a=rand()%(pairs.size()+1);
-			pairs.insert(pairs.begin()+a, RANDELEM(alphabet));
-		}
+			appendNetwork(se,postfix);
+			
+			/* Test whether the new postfix network yields a valid sorter when combined with the prefix */
+			if((se.size()>0) && testpairsFromPrefixOutput(se,parallelpatterns_from_prefix))
+			{
+				concatNetwork(prefix,se,totalnw);
+
+				/* Accept the new postfix */
+				pairs=newpairs;
+
+				checkImproved(totalnw);
+			}
+
+			/* With low probability, add another pair random pair at a random place. Attempt to escape from local optimum. */
+			if((EscapeRate>0) && ((mtRand()%EscapeRate)==0))
+			{
+				int a=mtRand()%(pairs.size()+1); // Random insertion position
+				Pair_t p = RANDELEM(alphabet);
+
+				// Determine if the random pair p could be added in the last layer
+				bool hit_successor = false;
+				for(Network_t::const_iterator it=pairs.begin()+a; it!= pairs.end() ; it++)
+				{
+					if((it->lo==p.lo)||(it->hi==p.lo)||(it->lo==p.hi)||(it->hi==p.hi))
+					{
+						hit_successor = true;
+						break;
+					}
+				}
+
+				if(force_valid_uphill_step && hit_successor)
+				{
+					pairs.insert(pairs.begin()+a, pairs[a]); // Prepend duplicate of existing pair right in front of it => Sorter with redundant pair will remain valid
+				}
+				else
+				{
+					pairs.insert(pairs.begin()+a, p); // Add random pair at the end of the network
+				}
+			}
+			
+			if((RestartRate>0) && ((mtRand()%RestartRate)==0))
+			{	
+				if( Verbosity > 1)
+				{
+					printf("Restart.\n");
+				}
+				switch(PrefixType) // Recompute prefix if not fixed
+				{
+					case 1: // Fixed prefix - no update: vectors remain the same after restart
+						break;
+					case 2: // Greedy algorithm A 
+						fillprefixGreedyA(prefix, GreedyPrefixSize);
+						prepareTestVectorsFromPrefix(prefix);
+						break;
+					case 3: // Hybrid prefix
+						fillprefixFixedThenGreedyA(prefix, GreedyPrefixSize);
+						prepareTestVectorsFromPrefix(prefix);
+						break;
+					default: // No prefix - no update: vectors remain the same after restart
+						break;
+				}
+
+				break; // Restart using outer loop
+			}
+		}	
 	}
 
 	return 0;

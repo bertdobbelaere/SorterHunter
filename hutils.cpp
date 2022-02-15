@@ -111,7 +111,7 @@ u32 computeDepth(const Network_t &nw)
 		int idx=nlayers-1;
 		while(idx>=0)
 		{
-			if((layers[idx] & ((1u<<i)|(1u<<j))) == 0)
+			if((layers[idx] & ((1ULL<<i)|(1ULL<<j))) == 0)
 			{
 				matchidx=idx;
 			}
@@ -126,8 +126,8 @@ u32 computeDepth(const Network_t &nw)
 			layers.push_back(0);
 			nlayers++;
 		}
-		layers[matchidx]|= 1u<<i;
-		layers[matchidx]|= 1u<<j;
+		layers[matchidx]|= 1ULL<<i;
+		layers[matchidx]|= 1ULL<<j;
 	}
 	
 	return nlayers;
@@ -160,8 +160,18 @@ void symmetricExpansion(u8 ninputs, const Network_t &inpairs, Network_t &outpair
 }
 
 
-void concat(const Network_t &nw1, const Network_t &nw2, Network_t &result)
+void concatNetwork(const Network_t &nw1, const Network_t &nw2, Network_t &result)
 {
 	result=nw1;
 	result.insert(result.end(),nw2.begin(),nw2.end());
 }
+
+
+void appendNetwork(Network_t &dst, const Network_t &src)
+{
+	if(src.size()>0)
+	{
+		dst.insert(dst.end(),src.begin(),src.end());
+	}
+}
+

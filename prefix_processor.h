@@ -3,7 +3,7 @@
  * @brief Network prefix related operations for SorterHunter program
  * @author Bert Dobbelaere bert.o.dobbelaere[at]telenet[dot]be
  *
- * Copyright (c) 2017 Bert Dobbelaere
+ * Copyright (c) 2022 Bert Dobbelaere
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -29,6 +29,8 @@
 #ifndef _PREFIX_PROCESSOR_H_
 #define _PREFIX_PROCESSOR_H_
 
+#include "htypes.h"
+
 /**
  * Given a prefix containing of 0 or more network pairs, computes the possible outputs of the (partially ordered) output set.
  * For an empty prefix, the result will contain 2**N patterns.
@@ -44,9 +46,10 @@ void computePrefixOutputs(u8 ninputs, const Network_t &prefix, SinglePatternList
  * The word size for packing is given by PARWORDSIZE
  * @param ninputs Number of inputs to the partially ordered network
  * @param singles Prefix output patterns to convert
+ * @param use_symmetry Optimize using symmetry
  * @param parallels [OUT] Bit parallel representations of the patterns
  */
-void convertToBitParallel(u8 ninputs, const SinglePatternList_t &singles, BitParallelList_t &parallels);
+void convertToBitParallel(u8 ninputs, const SinglePatternList_t &singles, bool use_symmetry, BitParallelList_t &parallels);
 
 /**
  * Tries to create a partially ordered network that (approximately) minimizes the number of possible outputs.
@@ -55,10 +58,10 @@ void convertToBitParallel(u8 ninputs, const SinglePatternList_t &singles, BitPar
  * @param ninputs Number of inputs to the partially ordered network
  * @param maxpairs Maximum number of pairs in the prefix
  * @param use_symmetry Set to true of the computed prefix needs to be symmetrical
- * @param searchdepth Recursive evaluation depth (>2 is extremely slow!)
  * @param prefix Contains fixed pairs as input (if any) and best prefix as output
+ * @param rndgen Random number generator for shuffling
  * @return Number of outputs from partially ordered network (ninputs+1 if fully sorted, 2**ninputs worst case)
  */
-SortWord_t createGreedyPrefix(u8 ninputs, u32 maxpairs, bool use_symmetry, u32 append_depth, Network_t &prefix);
+SortWord_t createGreedyPrefix(u8 ninputs, u32 maxpairs, bool use_symmetry, Network_t &prefix, RandGen_t &rndgen);
 
 #endif // _PREFIX_PROCESSOR_H_
