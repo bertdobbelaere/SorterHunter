@@ -18,9 +18,15 @@ n  | S(n) previous upper bound | S(n) new upper bound
 26 | 140 (*) | 139
 27 | 150 (*) | 148
 28 | 156 (*) | 155
-29 | 165 | 164
-33 | 201 | 199
-34 | 211 | 210
+29 | 165 ($) | 164
+33 | 201 ($) | 199
+34 | 211 ($) | 210
+35 | 223 ($) | 220 
+36 | 231 ($) | 229
+
+(*) Ref: "Using Symmetry and Evolutionary Search to Minimize Sorting Networks", Valsalam&Miikkulainen, 2013.
+($) Compared to smallest Batcher odd-even merge network
+
 
 The results above were obtained while keeping also the depth (i.e. number of parallel operation steps) low. 
 
@@ -31,7 +37,6 @@ I committed the program to the public domain as inspiration source for further i
 See the [list of best performing sorting networks](https://bertdobbelaere.github.io/sorting_networks.html) for a compilation of smallest and fastest networks with up to 32 inputs (as far as known by the author), together with the known bounds in depth and size.
 See the [extended list of sorting networks](https://bertdobbelaere.github.io/sorting_networks_extended.html) for an early version extension of this list to 64 inputs. 
 
-(*) Ref: "Using Symmetry and Evolutionary Search to Minimize Sorting Networks", Valsalam&Miikkulainen, 2013.
 
 ## The program
 The program is very straightforward to build (just "make") on a Linux machine. It expects *one* command line argument, which is the name of the configuration file to use. An example config file is bundled with the sources. Once initialised the program will enter an endless optimisation loop, printing out any improvements it found to previous results it reported. Current version is limited to 64 inputs.
