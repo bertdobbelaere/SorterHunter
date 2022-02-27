@@ -23,9 +23,14 @@ n  | S(n) previous upper bound | S(n) new upper bound
 34 | 211 ($) | 210
 35 | 223 ($) | 220 
 36 | 231 ($) | 229
+37 | 244 ($) | 243
+38 | 253 ($) | 251
+39 | 263 (^) | 261
+40 | 269 (^) | 268
 
-(*) Ref: "Using Symmetry and Evolutionary Search to Minimize Sorting Networks", Valsalam&Miikkulainen, 2013.
-($) Compared to smallest Batcher odd-even merge network
+(*) Ref: "Using Symmetry and Evolutionary Search to Minimize Sorting Networks", Valsalam&Miikkulainen, 2013.  
+($) Compared to smallest Batcher odd-even merge network  
+(^) Compared to Van Voorhis (4,4) merge strategy  
 
 
 The results above were obtained while keeping also the depth (i.e. number of parallel operation steps) low. 
