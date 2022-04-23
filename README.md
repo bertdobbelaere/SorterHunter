@@ -30,6 +30,9 @@ n  | S(n) previous upper bound | S(n) new upper bound
 41 | 284 (^) | 283
 43 | 305 (^) | 304
 44 | 313 (^) | 311
+46 | 334 (^) | 332
+47 | 343 (^) | 340
+48 | 349 (^) | 346
 
 (*) Ref: "Using Symmetry and Evolutionary Search to Minimize Sorting Networks", Valsalam&Miikkulainen, 2013.  
 ($) Compared to smallest Batcher odd-even merge network  
