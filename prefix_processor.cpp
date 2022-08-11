@@ -113,6 +113,7 @@ class ClusterGroup{
 		void preSort(Pair_t p);
 		void computeOutputs(SinglePatternList_t &patterns) const;
 		SortWord_t outputSize() const;
+		bool isSameCluster(Pair_t p) const;
 		~ClusterGroup();
 	private:
 		void combine(u8 i, u8 j);
@@ -228,6 +229,14 @@ void ClusterGroup::combine(u8 ci_idx, u8 cj_idx)
 	p2.clear();
 }
 
+
+bool ClusterGroup::isSameCluster(Pair_t p) const
+{
+	u32	ci_idx=clusterAlloc[p.lo];
+	u32 cj_idx=clusterAlloc[p.hi];
+	return ci_idx==cj_idx;
+}
+
 /**
  * Reduces the number of patterns represented by appending a single CE to the network.
  * If the CE's lines belong to different clusters, the clusters are merged first.
@@ -320,10 +329,33 @@ SortWord_t ClusterGroup::outputSize() const
 void computePrefixOutputs(u8 ninputs, const Network_t &prefix, SinglePatternList_t &patterns)
 {
 	ClusterGroup cg(ninputs);
+	Network_t todo = prefix;
 	
-	for(size_t k=0;k<prefix.size();k++)
+	while(todo.size() > 0)
 	{
-		cg.preSort(prefix[k]);
+		cg.preSort(todo[0]); // Process first remaining pair, combine related clusters
+		
+		Network_t postponed;
+		SortWord_t visitmask=0;
+		for(size_t k=1;k<todo.size();k++) // Skip 1st element, we just handled it
+		{
+			Pair_t el=todo[k];
+			SortWord_t elmask = (1ull<<el.lo)|(1ull<<el.hi);
+			
+			if(((visitmask & elmask)==0) && cg.isSameCluster(el))
+			{
+				// Prioritize elements that can be applied without extra cluster joining.
+				// The goal is to reduce memory requirements where possible
+				cg.preSort(el);
+			}
+			else
+			{
+				// Postpone till next iteration any element that requires additional clusters to be joined or has dependencies to unprocessed elements
+				postponed.push_back(el); 
+			}
+			visitmask |= elmask;
+		}
+		todo = postponed;
 	}
 	
 	cg.computeOutputs(patterns);
@@ -440,6 +472,10 @@ static void initAlphabet(u8 ninputs, bool use_symmetry)
 
 SortWord_t createGreedyPrefix(u8 ninputs, u32 maxpairs, bool use_symmetry, Network_t &prefix, RandGen_t &rndgen)
 {
+	if(Verbosity>2)
+	{
+		printf("Creating greedy prefix. Initial prefix size = %lu, max prefix size %u.\n",prefix.size(),maxpairs);
+	}
 	ClusterGroup cg(ninputs);
 	initAlphabet(ninputs, use_symmetry);
 
@@ -479,13 +515,25 @@ SortWord_t createGreedyPrefix(u8 ninputs, u32 maxpairs, bool use_symmetry, Netwo
 		if(minsize>=currentsize)
 		{
 			// Found no improvement
+			if(Verbosity>2)
+			{
+				printf("Greedy algorithm: no further improvement.\n");
+			}
 			break;
 		}
 		cg=cgbest;
+		if(Verbosity>2)
+		{
+			printf("Greedy: adding pair (%u,%u)\n",best.lo,best.hi);
+		}
 		prefix.push_back(best);
 		if(use_symmetry && ((best.lo+best.hi) != (ninputs-1)))
 		{
 			Pair_t p = { (u8)(ninputs-1-best.hi), (u8)(ninputs-1-best.lo) };
+			if(Verbosity>2)
+			{
+				printf("Greedy: adding symmetric pair (%u,%u)\n",p.lo,p.hi);
+			}
 			prefix.push_back(p);
 		}		
 		currentsize=minsize;

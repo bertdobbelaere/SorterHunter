@@ -28,7 +28,7 @@
  */
 
 
-#define VERSION "SorterHunter_V0.3"
+#define VERSION "SorterHunter_V0.4"
 
 #include "htypes.h"
 #include "hutils.h"
@@ -41,7 +41,7 @@
 #include <algorithm>
 #include <random>
 #include "ConfigParser.h"
-
+#include <ctime>
 #include "prefix_processor.h"
 
 ConfigParser cp;
@@ -149,14 +149,74 @@ void initalphabet()
 }		
 
 /**
+ * Heuristic test vector reordering - attempt to speed up rejection of failing networks.
+ * Core idea is to move the test vectors that most likely reject a non-sorter to the front of the list. 
+ * Withing the first group of PARWORDSIZE test vectors, the individual vectors are competing for the lowest bit position in a ladder tournament.
+ * Within that group, each time the vector with the lowest failing index is moving one step closer towards bit 0 by swapping it with its neighbour.
+ * Vectors within the 2nd group are competing with the highest bit position i.e. the "degradation candidate" of the 1st group. Vectors in higher 
+ * numbered groups (3rd group or later) are not individually rewarded, but the whole group is swapped with a group that is evaluated earlier in the ranking.
+ * As the network evolves, so will the selection of "best" vectors for detecting failing mutant networks. The method described attempts to dynamically
+ * optimize the order to the evolving situation. Note that to accept a sorting network, still all test vectors need to pass, no shortcuts are taken. 
+ * @param bpl List of test vectors matching the prefix (regrouped for parallel execution)
+ * @param failvector Index of first failing vector
+ */
+void bumpVectorPosition(BitParallelList_t &bpl, size_t failvector)
+{
+	size_t groupno = failvector/PARWORDSIZE;
+	size_t idx=N*groupno;
+	
+	if(groupno > 1)
+	{
+		size_t delta = N*((groupno+7)/8);
+		// Move up failing vector group about 1/8 the distance to the front
+		for(size_t k=0;k<N;k++)
+		{
+			BPWord_t z=bpl[idx+k-delta];
+			bpl[idx+k-delta] = bpl[idx+k];
+			bpl[idx+k] = z;
+		}
+	}
+	else if (groupno==1)
+	{
+		// Swap with last bit position of group 0
+		BPWord_t m0 = 1ull << (PARWORDSIZE-1);
+		BPWord_t m1 = 1ull << (failvector%PARWORDSIZE);
+		int shift = (PARWORDSIZE-1)-(failvector%PARWORDSIZE);
+		for(size_t k=0;k<N;k++)
+		{
+			BPWord_t old0=bpl[k];
+			BPWord_t old1=bpl[k+N];
+			bpl[k] = (old0&~m0) | ((old1&m1)<<shift);
+			bpl[k+N] = (old1&~m1) | ((old0&m0)>>shift);
+		}
+	}
+	else if (failvector>0) // groupno==0, bit position >0
+	{
+		//assert(failvector<PARWORDSIZE);
+		// Swap with neighbouring bit position within group 0
+		BPWord_t m0 = 1ull << (failvector-1);
+		BPWord_t m1 = 1ull << failvector;
+		for(size_t k=0;k<N;k++)
+		{
+			BPWord_t old=bpl[k];
+			bpl[k] = (old&~m0&~m1) | ((old&m1)>>1) | ((old&m0)<<1);
+		}
+	}
+}
+
+
+/**
  * Test a candidate network complementing the prefix.
+ * This function is called during the regular evolution loop and attempts to
+ * optimize the future order of test vectors in the background
  * @param pairs Candidated network
  * @param bpl List of test vectors matching the prefix
  * @return true if prefix+pairs form a valid sorter
  */
-bool testpairsFromPrefixOutput(const Network_t &pairs, const BitParallelList_t &bpl)
+bool testpairsFromPrefixOutput(const Network_t &pairs, BitParallelList_t &bpl)
 {
 	size_t idx=0;
+	size_t failvector=0;
 	
 	while(idx<bpl.size())
 	{
@@ -171,11 +231,67 @@ bool testpairsFromPrefixOutput(const Network_t &pairs, const BitParallelList_t &
 		for(size_t k=0;k<(N-1u);k++)
 			accum|= data[k]&~data[k+1]; // Scan for forbidden 1 -> 0 transition
 		if(accum!=0ULL)
+		{
+			while( (accum & 1ull) == 0)
+			{
+				accum>>=1;
+				failvector++;
+			}
+			
+			bumpVectorPosition(bpl, failvector);
+			
 			return false;
+		}
+		idx+=N;
+		failvector+=PARWORDSIZE;
+	}	
+	return true;
+}
+
+/**
+ * Test a candidate network complementing the prefix.
+ * This function is called during the search for an initial sorter
+ * @param pairs Candidated network
+ * @param bpl List of test vectors matching the prefix
+ * @param failed_output_pattern First unsorted output pattern detected. Used to determine candidate elements to be appended.
+ * @return true if prefix+pairs form a valid sorter
+ */
+bool testInitialPairsFromPrefixOutput(const Network_t &pairs, const BitParallelList_t &bpl, SortWord_t &failed_output_pattern)
+{
+	size_t idx=0;
+	failed_output_pattern=0;
+	
+	while(idx<bpl.size())
+	{
+		static BPWord_t data[NMAX];
+		BPWord_t accum=0;
+		
+		for(size_t k=0;k<N;k++)
+			data[k] = bpl[idx+k];
+		
+		applyBitParallelSort(data,pairs);
+		
+		for(size_t k=0;k<(N-1u);k++)
+			accum|= data[k]&~data[k+1]; // Scan for forbidden 1 -> 0 transition
+		if(accum!=0ULL)
+		{
+			while( (accum & 1ull) == 0)
+			{
+				accum>>=1;
+				for(size_t k=0;k<N;k++)
+					data[k]>>=1;
+			}
+			
+			for(size_t k=0;k<N;k++)
+				failed_output_pattern |= (data[k]&1) << k;
+			
+			return false;
+		}
 		idx+=N;
 	}	
 	return true;
 }
+
 
 
 /**
@@ -407,6 +523,13 @@ static void usage()
 	exit(1);
 }
 
+
+uint64_t itercount=0;
+uint64_t iter_next_report=1;
+uint64_t iter_last_report=0;
+time_t t0 = clock();
+time_t t1 = t0;
+
 /**
  * SorterHunter main routine
  */
@@ -460,6 +583,15 @@ int main(int argc, char *argv[])
 	Verbosity=cp.getInt("Verbosity",1);
 	postfix=cp.getNetwork("Postfix");
 
+	if((N%2) && use_symmetry)
+	{
+		if(Verbosity > 0)
+		{
+			printf("Warning: option 'Symmetric' ignored for odd number of inputs\n");
+		}
+		use_symmetry = false;
+	}
+
 	/* Initialize set of CEs to pick from */
 	initalphabet();
 
@@ -493,8 +625,9 @@ int main(int argc, char *argv[])
 	{
 		pairs=copyValidPairs(cp.getNetwork("InitialNetwork"),N);
 
-		// Produce initial solution, simply by adding random pairs until we found a valid network
-		// TODO: Improve this without giving too much direction to the search
+		// Produce initial solution, simply by adding random pairs until we found a valid network. In case no postfix is present, we demand that the added pair
+		// fixes at least one of the output inversions in the first detected error output vector, so it does at least some useful work to help sorting the outputs.
+		// In case there is a postfix network, this check is not implemented.
 		for(;;)
 		{
 			if(use_symmetry)
@@ -504,10 +637,36 @@ int main(int argc, char *argv[])
 				
 			appendNetwork(se,postfix);
 			
-			if(testpairsFromPrefixOutput(se, parallelpatterns_from_prefix))
+			SortWord_t failed_output_pattern;
+			
+			if(testInitialPairsFromPrefixOutput(se, parallelpatterns_from_prefix, failed_output_pattern))
 				break;
-				
-			pairs.push_back( RANDELEM(alphabet) );
+						
+			Pair_t p;
+			
+			if(postfix.size() == 0) // Empty postfix: find a pattern that fixes an arbitrary inversion in the first failed output
+			{
+				bool found_useful_ce=false;
+				do {
+					p = RANDELEM(alphabet);
+					
+					if ( (((failed_output_pattern>>p.lo)&1)==1) && (((failed_output_pattern>>p.hi)&1)==0) )
+						found_useful_ce = true;
+						
+					if(use_symmetry)
+					{
+						if ( (((failed_output_pattern>>((N-1)-p.hi))&1)==1) && (((failed_output_pattern>>((N-1)-p.lo))&1)==0) )
+							found_useful_ce = true;			
+					}
+					
+				}while( !found_useful_ce );
+			}
+			else // In case of postfix: just append a random initial pair to the core network, cannot directly determine good candidate from failed output pattern.
+			{
+				p = RANDELEM(alphabet); 
+			}
+			
+			pairs.push_back( p );
 		}
 
 		Network_t totalnw;
@@ -520,8 +679,27 @@ int main(int argc, char *argv[])
 		
 		checkImproved(totalnw);
 
-		for(;;) // Program never ends, keep trying to improve, way may restart in the outer loop however.
+		for(;;) // Program never ends, keep trying to improve, we may restart in the outer loop however.
 		{
+			if(Verbosity>2)
+			{
+				itercount++;
+				if(itercount >= iter_next_report)
+				{
+					clock_t t2 = clock();
+					
+					if((t2>t1)&&(t2>t0))
+					{
+						double t=(t2-t0)/(double)CLOCKS_PER_SEC;
+						double dt=(t2-t1)/(double)CLOCKS_PER_SEC;
+						printf("Iteration %lu  t=%.3lf s     %.1lf it/s\n", itercount, t,  (iter_next_report-iter_last_report)/dt ); 
+					}
+					
+					t1=t2;
+					iter_last_report = iter_next_report;
+					iter_next_report += (1 + iter_next_report/10); // Report about each 10% increase of iteration count, avoid all too frequent output
+				}
+			}
 			/* Determine number of mutations to use in this iteration */
 			u32 nmods=1;
 
@@ -593,9 +771,9 @@ int main(int argc, char *argv[])
 					pairs.insert(pairs.begin()+a, p); // Add random pair at the end of the network
 				}
 			}
-			
+		
 			if((RestartRate>0) && ((mtRand()%RestartRate)==0))
-			{	
+			{
 				if( Verbosity > 1)
 				{
 					printf("Restart.\n");
@@ -618,7 +796,7 @@ int main(int argc, char *argv[])
 
 				break; // Restart using outer loop
 			}
-		}	
+		}
 	}
 
 	return 0;
