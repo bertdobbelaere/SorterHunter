@@ -2,7 +2,7 @@
 # Note: keys are case sensitive.
 
 # Number of inputs to the sorting network (no default)
-Ninputs=20
+Ninputs=48
 
 # Assume symmetric network (=1) or not (=0)
 # Symmetric networks allow faster searches and give with few exceptions the best results for even values of Ninputs.
