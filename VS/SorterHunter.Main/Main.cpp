@@ -507,6 +507,8 @@ namespace sh {
 			{
 				printf(" {'N':%u,'L':%llu,'D':%u,'sw':'%s','ESC':%u,'Prefix':%llu,'Postfix':%llu,'nw':", N, nw.size(), depth, VERSION, EscapeRate, prefix.size(), postfix.size());
 				printnw(nw);
+
+				printf("\n%s\n", to_string(nw).c_str());
 				conv_hull.print();
 			}
 		}

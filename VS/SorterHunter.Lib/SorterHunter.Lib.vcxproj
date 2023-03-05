@@ -48,7 +48,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\ConfigParser.cpp" />
-    <ClCompile Include="..\..\hutils.cpp" />
     <ClCompile Include="..\..\prefix_processor.cpp" />
   </ItemGroup>
   <ItemGroup>
