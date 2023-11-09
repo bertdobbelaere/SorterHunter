@@ -29,8 +29,8 @@ n  | S(n) previous upper bound | S(n) new upper bound
 40 | 269 (^) | 265
 41 | 284 (^) | 282
 42 | 293 (^) | 292
-43 | 305 (^) | 304
-44 | 313 (^) | 311
+43 | 305 (^) | 303
+44 | 313 (^) | 309
 45 | 326 (^) | 324
 46 | 334 (^) | 332
 47 | 343 (^) | 340
@@ -46,7 +46,7 @@ n  | S(n) previous upper bound | S(n) new upper bound
 
 The results above were obtained while keeping also the depth (i.e. number of parallel operation steps) low. 
 
-For 25 and 26 inputs, the program was able to reduce the optimal depth upper bound from 14 to 13 layers. A similar reduction to 15 layers was achieved for 34 inputs.
+For 25 and 26 inputs, the program was able to reduce the optimal depth upper bound from 14 to 13 layers. A similar reduction to 15 layers was achieved for 34 inputs, and 17 layers for 42, 43 and 44 inputs.
 
 I committed the program to the public domain as inspiration source for further improvements on the subject of sorting networks.
 
@@ -64,7 +64,7 @@ After the config file is read, the program works as follows:
 During the entire run time of the (current) program, the same prefix is used. There are three options:
 1. Empty prefix - all CEs (compare-exchange nodes) participate in the evolutionary optimisation
 2. Fixed prefix - provided by the user in the config file
-3. Greedy prefix - in a simple algorithm I call "greedy algorithm A", nodes are added one by one starting from an empty network and up to the specified prefix size is reached. For each step, a CE is randomly chosen among those that result in the minimum number of remaining (partially sorted) patterns after the prefix network (assuming application of the "*zero-one principle*"). I expect that still much can be improved on the prefix selection algorithm
+3. Greedy prefix - in a simple algorithm I call "greedy algorithm A", nodes are added one by one starting from an empty network and up to the specified prefix size is reached. For each step, a CE is randomly chosen among those that result in the minimum number of remaining (partially sorted) patterns after the prefix network (assuming application of the "*zero-one principle*"). I expect that still much can be improved on the prefix selection algorithm.
 #### Preparing the test vectors
 With an empty prefix, testing a network with N inputs by blind application of the "*zero-one principle*" would require 2^N input vectors of N elements to be sent through the candidate sorter. While CE nodes are added in the prefix, the set of possible output patterns of the prefix gradually decreases. To test the remainder of the network, only the possible output patterns of the prefix network need to be considered as input vectors. As the prefix is known before we will iteratively try to improve the network, the test vectors can be enumerated in a fixed list. Test vectors are placed in pseudorandom order. The reason for this is that in this way we increase the chances that an invalid candidate sorter (the vast majority!) will be rejected early in the test process, assuming not all test vectors are applied at once. Further, using 0's and 1's as input, the behaviour of a CE can simply be modelled as a combination of a single "and" and "or" gate. As the order of comparisons and exchanges for a sorting network is fixed, we use a bit-parallel approach to sort multiple test vectors in parallel (64 on a 64 bit machine), obtaining a considerable speed increase.
 #### Determining an initial candidate sorter
