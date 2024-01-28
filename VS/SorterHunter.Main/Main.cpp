@@ -44,6 +44,8 @@
 #include <ctime>
 #include "prefix_processor.h"
 
+#include "linear_to_layers.h"
+
 
 namespace sh {
 	ConfigParser cp;
@@ -497,7 +499,7 @@ namespace sh {
 	 * Report sorting network if it is an improved (size,depth) combination
 	 * @param nw Valid sorting network
 	 */
-	static void checkImproved(const Network_t& nw)
+	static void checkImproved(const Network_t& nw, const Network_t& fixed_prefix)
 	{
 		u32 depth = computeDepth(nw);
 		if (conv_hull.improved(nw.size(), depth))
@@ -508,7 +510,16 @@ namespace sh {
 				printf(" {'N':%u,'L':%llu,'D':%u,'sw':'%s','ESC':%u,'Prefix':%llu,'Postfix':%llu,'nw':", N, nw.size(), depth, VERSION, EscapeRate, prefix.size(), postfix.size());
 				printnw(nw);
 
-				printf("\n%s\n", to_string(nw).c_str());
+				const bool print_layers = true;
+				if (print_layers) {
+					//const auto layers = tools::linear_to_layers(nw);
+					const auto layers = tools::linear_to_layers(tools::remove_prefix(nw, prefix));
+					printf("layers:\n%s\n", tools::layers_to_string_mojo(layers).c_str());
+				}
+				else { // print linear list of ce's
+					printf("\n%s\n", to_string(nw).c_str());
+				}
+
 				conv_hull.print();
 			}
 		}
@@ -556,6 +567,7 @@ int main(int argc, char* argv[])
 	if (!cp.parseConfig(argv[1]))
 	{
 		printf("Error parsing config options.\n");
+		std::getchar();
 		return -1;
 	}
 
@@ -687,7 +699,7 @@ int main(int argc, char* argv[])
 			printf("Initial network size: %llu\n", totalnw.size());
 		}
 
-		checkImproved(totalnw);
+		checkImproved(totalnw, prefix);
 
 		for (;;) // Program never ends, keep trying to improve, we may restart in the outer loop however.
 		{
@@ -752,7 +764,7 @@ int main(int argc, char* argv[])
 				/* Accept the new postfix */
 				pairs = newpairs;
 
-				checkImproved(totalnw);
+				checkImproved(totalnw, prefix);
 			}
 
 			/* With low probability, add another pair random pair at a random place. Attempt to escape from local optimum. */

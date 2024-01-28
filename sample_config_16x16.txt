@@ -2,7 +2,7 @@
 # Note: keys are case sensitive.
 
 # Number of inputs to the sorting network (no default)
-Ninputs=16
+Ninputs=32
 
 # Assume symmetric network (=1) or not (=0)
 # Symmetric networks allow faster searches and give with few exceptions the best results for even values of Ninputs.
@@ -42,8 +42,9 @@ PrefixType = 1
 
 # Specify fixed prefix as comma separated list of pairs. Inputs are 0 based.
 # Only relevant if PrefixType = 1 or 3
-# Net_8_8: first 8 nodes are sorted, next 8 nodes are also sorted:
-FixedPrefix=(0,2),(1,3),(4,6),(5,7),(8,10),(9,11),(12,14),(13,15),(0,4),(1,5),(2,6),(3,7),(8,12),(9,13),(10,14),(11,15),(0,1),(2,3),(4,5),(6,7),(8,9),(10,11),(12,13),(14,15),(2,4),(3,5),(10,12),(11,13),(1,4),(3,6),(9,12),(11,14),(1,2),(3,4),(5,6),(9,10),(11,12),(13,14)
+
+#Net_16_16: first 16 nodes are sorted, next 16 nodes are also sorted:
+FixedPrefix=(0,5),(1,4),(2,12),(3,13),(6,7),(8,9),(10,15),(11,14),(16,21),(17,20),(18,28),(19,29),(22,23),(24,25),(26,31),(27,30),(0,2),(1,10),(3,6),(4,7),(5,14),(8,11),(9,12),(13,15),(16,18),(17,26),(19,22),(20,23),(21,30),(24,27),(25,28),(29,31),(0,8),(1,3),(2,11),(4,13),(5,9),(6,10),(7,15),(12,14),(16,24),(17,19),(18,27),(20,29),(21,25),(22,26),(23,31),(28,30),(0,1),(2,4),(3,8),(5,6),(7,12),(9,10),(11,13),(14,15),(16,17),(18,20),(19,24),(21,22),(23,28),(25,26),(27,29),(30,31),(1,3),(2,5),(4,8),(6,9),(7,11),(10,13),(12,14),(17,19),(18,21),(20,24),(22,25),(23,27),(26,29),(28,30),(1,2),(3,5),(4,11),(6,8),(7,9),(10,12),(13,14),(17,18),(19,21),(20,27),(22,24),(23,25),(26,28),(29,30),(2,3),(4,5),(6,7),(8,9),(10,11),(12,13),(18,19),(20,21),(22,23),(24,25),(26,27),(28,29),(4,6),(5,7),(8,10),(9,11),(20,22),(21,23),(24,26),(25,27),(3,4),(5,6),(7,8),(9,10),(11,12),(19,20),(21,22),(23,24),(25,26),(27,28)
 
 # Postfix network to finish the sorter. One application is to search for median detecting networks.
 # e.g. to find a network just outputing the median of Ninputs=7 inputs, define postfix (0,1),(1,2),(0,1),(4,5),(5,6),(4,5), then find a sorter and just strip the postfix afterwards.
@@ -53,7 +54,7 @@ FixedPrefix=(0,2),(1,3),(4,6),(5,7),(8,10),(9,11),(12,14),(13,15),(0,4),(1,5),(2
 # Pairs containing input indices >= Ninputs will be silently removed (allows reduction of larger known good networks)
 # Note that if Symmetric=1 the pairs in InitialNetwork will be subject to mirroring and duplication.
 # This feature can be used to try to improve an existing network. Default: empty.
-#InitialNetwork=(0,1)
+# InitialNetwork=(0,1)
 
 # Inverse probablity per iteration to start over. This is one of the strategies to escape a local minimum. Default: no restart
 #RestartRate=1000000000

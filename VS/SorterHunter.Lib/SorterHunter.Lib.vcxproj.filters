@@ -57,5 +57,8 @@
     <ClInclude Include="..\..\prefix_processor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\linear_to_layers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

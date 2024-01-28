@@ -102,7 +102,7 @@ namespace sh {
 		const int size = static_cast<int>(nw.size());
 		printf("{");
 		for (int k = 0; k < size; ++k) {
-			printf("{%u,%u}", nw[k].lo, nw[k].hi);
+			printf("(%u,%u)", nw[k].lo, nw[k].hi);
 			printf("%c", ((k + 1) < size) ? ',' : '}');
 		}
 		printf("}\r\n");

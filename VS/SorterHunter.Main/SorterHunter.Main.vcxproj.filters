@@ -19,4 +19,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\sample_config.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="..\..\sample_config_8x8.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="..\..\sample_config_16x16.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="..\..\sample_config_32x32.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="..\..\sample_config_128.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
 </Project>
