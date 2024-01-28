@@ -65,6 +65,7 @@
     <ClInclude Include="..\..\ConfigParser.h" />
     <ClInclude Include="..\..\htypes.h" />
     <ClInclude Include="..\..\hutils.h" />
+    <ClInclude Include="..\..\linear_to_layers.h" />
     <ClInclude Include="..\..\prefix_processor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
