@@ -31,29 +31,41 @@
 #include <vector>
 
 namespace sh {
-#define NMAX (64)
-#define PARWORDSIZE (64)
+	#define INOUT
 
-	using std::size_t;
+	namespace {
+		template <int N_BITS> struct TypeChooser {};
+		template <> struct TypeChooser<8> { using Type = uint8_t; };
+		template <> struct TypeChooser<16> { using Type = uint16_t; };
+		template <> struct TypeChooser<32> { using Type = uint32_t; };
+		template <> struct TypeChooser<64> { using Type = uint64_t; };
+	}
 
-	typedef uint64_t SortWord_t; ///< Needs to contain at least NMAX bits
-	typedef uint64_t BPWord_t;   ///< Bit-parallel operation word, needs to contain at least PARWORDSIZE bits
-	typedef uint32_t u32;
-	typedef uint8_t u8;
+	constexpr int NMAX = 16;
+	constexpr int PARWORDSIZE = 16;
+	using SortWord_t = TypeChooser<NMAX>::Type;
+	using BPWord_t = TypeChooser<PARWORDSIZE>::Type;
+
+	using u32 = uint32_t ;
+	using u8 = uint8_t;
+
+	using ChannelT = uint8_t;
+
 
 	/**
 	 * CE representation
 	 */
 	struct Pair_t {
-		u8 lo, hi; ///< low and high line indices connected by the element
+		ChannelT lo, hi; ///< low and high line indices connected by the element
 		bool operator==(const Pair_t& p) const { return (lo == p.lo) && (hi == p.hi); }
-		bool operator!=(const Pair_t& p) const { return (lo != p.lo) || (hi != p.hi); }
+
+		explicit Pair_t(ChannelT lo, ChannelT hi) : lo(lo), hi(hi) {}
 	};
 
-	typedef std::vector<Pair_t> Network_t;
+	using Network_t = std::vector<Pair_t>;
 
-	typedef std::vector<SortWord_t> SinglePatternList_t;
+	using SinglePatternList_t = std::vector<SortWord_t>;
 
-	typedef std::vector<BPWord_t> BitParallelList_t;
+	using BitParallelList_t = std::vector<BPWord_t>;
 
 }

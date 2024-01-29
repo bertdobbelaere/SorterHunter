@@ -12,14 +12,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\ConfigParser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\prefix_processor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\..\LICENSE">
       <Filter>Resource Files</Filter>
     </None>
@@ -37,14 +29,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\..\sample_config.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="..\..\sample_config2.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\..\ConfigParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -58,6 +42,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\linear_to_layers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ClusterGroup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\swap_sorted_patterns.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\State.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
