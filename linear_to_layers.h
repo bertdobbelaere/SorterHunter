@@ -141,8 +141,7 @@ namespace sh::tools {
         const std::vector<std::vector<std::pair<int, int>>> layers = linear_to_layers(input);
         std::cout << layers_to_string(layers);
 
-
-        // Display the result
+        // Expected the result
         //[(0, 8), (1, 6), (2, 4), (3, 11), (5, 10), (7, 9)]
         //[(0, 7), (1, 3), (2, 5), (4, 11), (6, 9), (8, 10)]
         //[(0, 2), (4, 6), (5, 7), (9, 11)]
