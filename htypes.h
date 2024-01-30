@@ -41,8 +41,8 @@ namespace sh {
 		template <> struct TypeChooser<64> { using Type = uint64_t; };
 	}
 
-	constexpr int NMAX = 16;
-	constexpr int PARWORDSIZE = 16;
+	constexpr int NMAX = 64;
+	constexpr int PARWORDSIZE = 64;
 	using SortWord_t = TypeChooser<NMAX>::Type;
 	using BPWord_t = TypeChooser<PARWORDSIZE>::Type;
 

@@ -18,48 +18,41 @@ namespace sh {
 	 * output patterns. If the CE is added that combines the last two clusters, only one cluster will remain.
 	 * If after that sufficient new CEs are added, only ninputs+1 patterns will remain, meaning that the network is fully sorted.
 	 */
+
+	template <int N>
 	class ClusterGroup {
 	private:
-
-		SinglePatternList_t* pattern_lists; ///< Sorted list of output patterns from each cluster of lines
-		SortWord_t* masks; ///< Masks for each cluster marking the applicable lines for each cluster
-		u8* clusterAlloc; ///< Allocations of lines to clusters
-		int ninputs; ///< Total number of inputs (and outputs) of the network
+		//int N; ///< Total number of inputs (and outputs) of the network
+		std::array<SinglePatternList_t, ClusterGroup::N> pattern_lists; ///< Sorted list of output patterns from each cluster of lines
+		std::array<SortWord_t, N> masks; ///< Masks for each cluster marking the applicable lines for each cluster
+		std::array<int, N> clusterAlloc; ///< Allocations of lines to clusters
 
 	public:
 
 		// Initialize an empty cluster group
-		ClusterGroup(int ninputs) : ninputs(ninputs) {
-			pattern_lists = new SinglePatternList_t[ninputs];
-			masks = new SortWord_t[ninputs];
-			clusterAlloc = new u8[ninputs];
-			clear();
+		ClusterGroup() {
+			this->clear();
 		}
 
 		// Copy constructor
 		ClusterGroup(const ClusterGroup& cg)
 		{
-			ninputs = cg.ninputs;
-			pattern_lists = new SinglePatternList_t[ninputs];
-			masks = new SortWord_t[ninputs];
-			clusterAlloc = new u8[ninputs];
-			for (int k = 0; k < ninputs; k++)
+			for (int k = 0; k < N; k++)
 			{
-				pattern_lists[k] = cg.pattern_lists[k];
-				masks[k] = cg.masks[k];
-				clusterAlloc[k] = cg.clusterAlloc[k];
+				this->pattern_lists[k] = cg.pattern_lists[k];
+				this->masks[k] = cg.masks[k];
+				this->clusterAlloc[k] = cg.clusterAlloc[k];
 			}
 		}
 
 		// Assignment of cluster groups to each other
-		const ClusterGroup& operator=(const ClusterGroup& cg)
+		ClusterGroup& operator=(const ClusterGroup& cg)
 		{
-			ninputs = cg.ninputs;
-			for (int k = 0; k < ninputs; k++)
+			for (int k = 0; k < N; k++)
 			{
-				pattern_lists[k] = cg.pattern_lists[k];
-				masks[k] = cg.masks[k];
-				clusterAlloc[k] = cg.clusterAlloc[k];
+				this->pattern_lists[k] = cg.pattern_lists[k];
+				this->masks[k] = cg.masks[k];
+				this->clusterAlloc[k] = cg.clusterAlloc[k];
 			}
 			return *this;
 		}
@@ -71,13 +64,13 @@ namespace sh {
 		*/
 		void clear()
 		{
-			for (int k = 0; k < ninputs; k++)
+			for (int k = 0; k < N; k++)
 			{
-				clusterAlloc[k] = k;
-				masks[k] = static_cast<SortWord_t>(1) << k;
-				pattern_lists[k].clear();
-				pattern_lists[k].push_back(0);
-				pattern_lists[k].push_back(static_cast<SortWord_t>(1) << k);
+				this->clusterAlloc[k] = k;
+				this->masks[k] = static_cast<SortWord_t>(1) << k;
+				this->pattern_lists[k].clear();
+				this->pattern_lists[k].push_back(0);
+				this->pattern_lists[k].push_back(static_cast<SortWord_t>(1) << k);
 			}
 		}
 
@@ -88,8 +81,8 @@ namespace sh {
 		*/
 		void preSort(const Pair_t& p)
 		{
-			const int ci_idx = static_cast<int>(clusterAlloc[p.lo]);
-			const int cj_idx = static_cast<int>(clusterAlloc[p.hi]);
+			const int ci_idx = clusterAlloc[p.lo];
+			const int cj_idx = clusterAlloc[p.hi];
 
 			if (ci_idx != cj_idx)
 			{
@@ -105,13 +98,14 @@ namespace sh {
 		*/
 		void computeOutputs(INOUT SinglePatternList_t& patterns) const
 		{
-			std::array<SinglePatternList_t*, NMAX> pLists;
+			std::array<SinglePatternList_t const*, NMAX> pLists;
 			int n_to_combine = 0;
 
-			for (int k = 0; k < ninputs; k++)
+			for (int k = 0; k < N; k++)
 			{
 				if (masks[k] != 0) {
-					pLists[n_to_combine++] = &pattern_lists[k];
+					const auto& x = pattern_lists[k];
+					pLists[n_to_combine++] = &x;
 				}
 			}
 
@@ -161,7 +155,7 @@ namespace sh {
 		{
 			SortWord_t prod = 1;
 
-			for (int k = 0; k < ninputs; k++)
+			for (int k = 0; k < N; k++)
 			{
 				if (masks[k] != 0) {
 					prod *= static_cast<SortWord_t>(pattern_lists[k].size());
@@ -184,14 +178,6 @@ namespace sh {
 			return ci_idx == cj_idx;
 		}
 
-		// Clean up cluster group
-		~ClusterGroup()
-		{
-			delete[] pattern_lists;
-			delete[] masks;
-			delete[] clusterAlloc;
-		}
-
 	private:
 
 		/**
@@ -205,7 +191,7 @@ namespace sh {
 			SinglePatternList_t& p1 = pattern_lists[ci_idx];
 			SinglePatternList_t& p2 = pattern_lists[cj_idx];
 
-			for (int k = 0; k < ninputs; k++) {
+			for (int k = 0; k < N; k++) {
 				if (clusterAlloc[k] == cj_idx) {
 					clusterAlloc[k] = ci_idx; // ci will take over
 				}

@@ -30,7 +30,7 @@
 #include <random>
 #include <bitset>
 #include <string>
-
+#include <iostream> // std::cout
 #include "htypes.h"
 
 namespace sh {
@@ -80,16 +80,19 @@ namespace sh {
 	 * @param inpairs Input network
 	 * @param outpairs Symmetrical output network
 	 */
-	inline void symmetricExpansion(int ninputs, const Network_t& inpairs, INOUT Network_t& outpairs)
+	template <int N>
+	void symmetricExpansion(const Network_t& inpairs, INOUT Network_t& outpairs)
 	{
+		//std::cout << "symmetricExpansion: inpairs.size=" << inpairs.size() << std::endl;
+
 		outpairs.clear();
-		for (int k = 0; k < static_cast<int>(inpairs.size()); k++)
+		for (const Pair_t& p : inpairs)
 		{
-			outpairs.push_back(inpairs[k]);
-			if ((inpairs[k].lo + inpairs[k].hi) != (ninputs - 1)) // Don't duplicate pair that maps on itself
+			outpairs.push_back(p);
+			if ((p.lo + p.hi) != (N - 1)) // Don't duplicate pair that maps on itself
 			{
-				const ChannelT lo = ninputs - 1 - inpairs[k].hi;
-				const ChannelT hi = ninputs - 1 - inpairs[k].lo;
+				const ChannelT lo = N - 1 - p.hi;
+				const ChannelT hi = N - 1 - p.lo;
 				// NOTE: 50% of time is spend on pushing to outpairs
 				outpairs.push_back(Pair_t(lo, hi));
 			}
@@ -229,6 +232,6 @@ namespace sh {
 
 	typedef std::mt19937_64 RandGen_t;
 
-#define RANDIDX(v) (mtRand()%v.size())      ///< Random index from vector
+#define RANDIDX(v) (state::mtRand()%v.size())      ///< Random index from vector
 #define RANDELEM(v) (v[RANDIDX(v)])         ///< Random element from vector
 }
