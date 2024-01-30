@@ -2,19 +2,18 @@
 
 #include "ConfigParser.h"
 
-namespace sh {
+namespace sh::state {
 
 	///< Overall verbosity level: 0:minimal, 1:moderate, 2:high, >2:debug        
 	int Verbosity = 1;
 
 	SortWord_t all_n_inputs_mask; ///< ninputs lowest bit to be set
 
-
 	ConfigParser cp;
 
 	bool use_symmetry = true; ///< Treat sorting network as symmetric or not
 	bool force_valid_uphill_step = true; ///< "Uphill" step inserts duplicate CE if not in final layer.
-	int N = 0;                   ///< Problem dimension, i.e. number of inputs to be sorted
+	//int N = 0;                   ///< Problem dimension, i.e. number of inputs to be sorted
 	int EscapeRate = 0;         ///< Adds a random pair (and its symmetric complement for symmetric networks) every x iterations
 	int MaxMutations = 1;       ///< Maximum allowed number of mutations in evolution step
 	int PrefixType = 0;         ///< Type of prefix used (0=none, 1=fixed, 2=greedy)

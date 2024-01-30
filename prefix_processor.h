@@ -46,11 +46,12 @@ namespace sh {
 		 * i.e. if a symmetric network sorts '00101111', if will also sort '00001011'
 		 * This function is used to discard the largest of those patterns.
 		 */
-		inline bool hasSmallerMirror(int ninputs, const SortWord_t& w)
+		template <int N>
+		[[nodiscard]] bool hasSmallerMirror(const SortWord_t& w)
 		{
 			SortWord_t rw = 0;
 			SortWord_t tmp = w;
-			for (int k = 0; k < ninputs; k++) {
+			for (int k = 0; k < N; k++) {
 				rw <<= 1;
 				rw |= ~tmp & static_cast<SortWord_t>(1);
 				tmp >>= 1;
@@ -63,17 +64,18 @@ namespace sh {
 		 * @param ninputs Number of network inputs
 		 * @param use_symmetry If set to true duplicates due to mirroring will be omitted
 		 */
-		inline void initAlphabet(int ninputs, bool use_symmetry)
+		template <int N>
+		void initAlphabet(bool use_symmetry)
 		{
-			alphabet.clear();
-			for (int i = 0; i < (ninputs - 1); i++) {
-				const ChannelT jsym = ninputs - 1 - i;
-				for (int j = i + 1; j < ninputs; j++) {
-					const ChannelT isym = ninputs - 1 - j;
+			state::alphabet.clear();
+			for (int i = 0; i < (N - 1); i++) {
+				const ChannelT jsym = N - 1 - i;
+				for (int j = i + 1; j < N; j++) {
+					const ChannelT isym = N - 1 - j;
 
 					if (!use_symmetry || (isym > i) || ((isym == i) && (jsym >= j)))
 					{
-						alphabet.push_back(Pair_t(i, j));
+						state::alphabet.push_back(Pair_t(i, j));
 					}
 				}
 			}
@@ -88,9 +90,10 @@ namespace sh {
 	 * @param prefix Prefix to process
 	 * @param patterns [OUT] List of output patterns
 	 */
-	inline void computePrefixOutputs(int ninputs, const Network_t& prefix, INOUT SinglePatternList_t& patterns)
+	template <int N>
+	void computePrefixOutputs(const Network_t& prefix, INOUT SinglePatternList_t& patterns)
 	{
-		ClusterGroup cg(ninputs);
+		auto cg = ClusterGroup<N>();
 		Network_t todo = prefix;
 
 		while (!todo.empty())
@@ -131,32 +134,33 @@ namespace sh {
 	 * @param use_symmetry Optimize using symmetry
 	 * @param parallels [OUT] Bit parallel representations of the patterns
 	 */
-	inline void convertToBitParallel(int ninputs, const SinglePatternList_t& singles, bool use_symmetry, INOUT BitParallelList_t& parallels)
+	template <int N>
+	void convertToBitParallel(const SinglePatternList_t& singles, bool use_symmetry, INOUT BitParallelList_t& parallels)
 	{
 		int level = 0;
 		std::array<BPWord_t, NMAX> buffer;
 		parallels.clear();
 
-		all_n_inputs_mask = 0;
-		for (int k = 0; k < ninputs; k++)
+		state::all_n_inputs_mask = 0;
+		for (int k = 0; k < N; k++)
 		{
-			all_n_inputs_mask |= BPWord_t(1) << k;
+			state::all_n_inputs_mask |= BPWord_t(1) << k;
 		}
 
 		for (int idx = 0; idx < singles.size(); idx++)
 		{
 			SortWord_t w = singles[idx];
-			if (use_symmetry && hasSmallerMirror(ninputs, w))
+			if (use_symmetry && hasSmallerMirror<N>(w))
 			{
 				continue; // Complement of reverse word is smaller, skip this vector if the network is symmetric
 			}
 
-			if (isSorted(ninputs, w))
+			if (isSorted(w))
 			{
 				continue; // Already sorted pattern will not be affected by sorting operation - useless as test vector
 			}
 
-			for (int b = 0; b < ninputs; b++)
+			for (int b = 0; b < N; b++)
 			{
 				buffer[b] <<= 1;
 				buffer[b] |= (w & 1);
@@ -166,7 +170,7 @@ namespace sh {
 
 			if (level >= PARWORDSIZE)
 			{
-				for (int b = 0; b < ninputs; b++)
+				for (int b = 0; b < N; b++)
 				{
 					parallels.push_back(buffer[b]);
 					buffer[b] = 0; // Needed ? Probably not, but cleaner.
@@ -176,15 +180,15 @@ namespace sh {
 		}
 		if (level > 0)
 		{
-			for (int b = 0; b < ninputs; b++)
+			for (int b = 0; b < N; b++)
 			{
 				parallels.push_back(buffer[b]);
 			}
 		}
 
-		if (Verbosity > 2)
+		if (state::Verbosity > 2)
 		{
-			printf("Debug: Pattern conversion: %llu single inputs -> %llu parallel words (%u * %llu) (symmetry:%d)\n", singles.size(), parallels.size(), ninputs, parallels.size() / ninputs, use_symmetry);
+			printf("Debug: Pattern conversion: %llu single inputs -> %llu parallel words (%u * %llu) (symmetry:%d)\n", singles.size(), parallels.size(), N, parallels.size() / N, use_symmetry);
 		}
 	}
 
@@ -199,14 +203,15 @@ namespace sh {
 	 * @param rndgen Random number generator for shuffling
 	 * @return Number of outputs from partially ordered network (ninputs+1 if fully sorted, 2**ninputs worst case)
 	 */
-	inline SortWord_t createGreedyPrefix(int ninputs, int maxpairs, bool use_symmetry, INOUT Network_t& prefix, INOUT RandGen_t& rndgen)
+
+	template <int N> SortWord_t createGreedyPrefix(int maxpairs, bool use_symmetry, INOUT Network_t& prefix, INOUT RandGen_t& rndgen)
 	{
-		if (Verbosity > 2)
+		if (state::Verbosity > 2)
 		{
 			printf("Creating greedy prefix. Initial prefix size = %llu, max prefix size %u.\n", prefix.size(), maxpairs);
 		}
-		ClusterGroup cg(ninputs);
-		initAlphabet(ninputs, use_symmetry);
+		auto cg = ClusterGroup<N>();
+		initAlphabet<N>(use_symmetry);
 
 		for (int k = 0; k < static_cast<int>(prefix.size()); k++) {
 			cg.preSort(prefix[k]);
@@ -215,25 +220,25 @@ namespace sh {
 
 		while ((prefix.size() < maxpairs) || (use_symmetry && (prefix.size() < (maxpairs - 1))))
 		{
-			Network_t ashuf = alphabet;
+			Network_t ashuf = state::alphabet;
 			Pair_t best = Pair_t(0, 1);
 			std::shuffle(ashuf.begin(), ashuf.end(), rndgen);
 			SortWord_t minsize = current_size;
 
-			ClusterGroup cgbest = cg;
+			ClusterGroup<N> cgbest = cg;
 			SortWord_t min_future_size = current_size;
-			for (int k = 0; k < static_cast<int>(alphabet.size()); k++)
+			for (int k = 0; k < static_cast<int>(state::alphabet.size()); k++)
 			{
-				ClusterGroup cgnew = cg;
+				ClusterGroup<N> cgnew = cg;
 				cgnew.preSort(ashuf[k]);
-				if (use_symmetry && ((ashuf[k].lo + ashuf[k].hi) != (ninputs - 1)))
+				if (use_symmetry && ((ashuf[k].lo + ashuf[k].hi) != (N - 1)))
 				{
-					const ChannelT lo = ninputs - 1 - ashuf[k].hi;
-					const ChannelT hi = ninputs - 1 - ashuf[k].lo;
+					const ChannelT lo = N - 1 - ashuf[k].hi;
+					const ChannelT hi = N - 1 - ashuf[k].lo;
 					cgnew.preSort(Pair_t(lo, hi));
 				}
 				const SortWord_t newsize = cgnew.outputSize();
-				SortWord_t futuresize = newsize;
+				const SortWord_t futuresize = newsize;
 				if (futuresize < min_future_size)
 				{
 					minsize = newsize;
@@ -246,22 +251,22 @@ namespace sh {
 			if (minsize >= current_size)
 			{
 				// Found no improvement
-				if (Verbosity > 2)
+				if (state::Verbosity > 2)
 				{
 					printf("Greedy algorithm: no further improvement.\n");
 				}
 				break;
 			}
 			cg = cgbest;
-			if (Verbosity > 2)
+			if (state::Verbosity > 2)
 			{
 				printf("Greedy: adding pair (%u,%u)\n", best.lo, best.hi);
 			}
 			prefix.push_back(best);
-			if (use_symmetry && ((best.lo + best.hi) != (ninputs - 1)))
+			if (use_symmetry && ((best.lo + best.hi) != (N - 1)))
 			{
-				Pair_t p = Pair_t(ninputs - 1 - best.hi, ninputs - 1 - best.lo);
-				if (Verbosity > 2)
+				Pair_t p = Pair_t(N - 1 - best.hi, N - 1 - best.lo);
+				if (state::Verbosity > 2)
 				{
 					printf("Greedy: adding symmetric pair (%u,%u)\n", p.lo, p.hi);
 				}

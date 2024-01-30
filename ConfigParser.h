@@ -207,7 +207,7 @@ namespace sh {
 					{
 						bool ok = value2u64(stripline(value.substr(tokenstart, idx - tokenstart)), p2);
 						state = ok ? 3 : 100;
-						if (ok && (p1 <= 255) && (p2 <= 255))
+						if (ok && (p1 <= 255) && (p2 <= 255)) //TODO: remove restrictions
 						{
 							network.push_back(Pair_t(static_cast<ChannelT>(p1), static_cast<ChannelT>(p2)));
 						}

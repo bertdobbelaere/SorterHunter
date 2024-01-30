@@ -5,12 +5,10 @@
 
 namespace sh {
 
-	namespace {
-		inline bool isSorted(int ninputs, const SortWord_t& w)
-		{
-			SortWord_t w2 = ~w & all_n_inputs_mask;
-			return (w2 & (w2 + 1)) == 0;
-		}
+	inline bool isSorted(const SortWord_t& w)
+	{
+		const SortWord_t w2 = ~w & state::all_n_inputs_mask;
+		return (w2 & (w2 + 1)) == 0;
 	}
 
 
@@ -32,7 +30,10 @@ namespace sh {
 		int idxp = 0;
 		int idxnp = 0;
 		const int l = static_cast<int>(patterns.size());
-		SortWord_t last = -1;
+		std::cout << "swap_sorted_patterns; l=" << l << std::endl;
+
+
+		SortWord_t last = static_cast<SortWord_t>(-1);
 
 		while ((idxp < l) && ((patterns[idxp] & mask) != p)) { idxp++; }
 		while ((idxnp < l) && ((patterns[idxnp] & mask) == p)) { idxnp++; }

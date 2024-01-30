@@ -66,13 +66,13 @@ namespace sh {
 	 * @param data Input/output vectors
 	 * @param nw Network to be tested
 	 */
-	void applyBitParallelSort(std::array<BPWord_t, NMAX>& data, const Network_t& nw)
+	void applyBitParallelSort(INOUT std::array<BPWord_t, NMAX>& data, const Network_t& nw)
 	{
 		// NOTE: 20% of time is spend in this loop
-		for (int n = 0; n < static_cast<int>(nw.size()); n++)
+		for (const Pair_t& p : nw)
 		{
-			const auto i = nw[n].lo;
-			const auto j = nw[n].hi;
+			const auto i = p.lo;
+			const auto j = p.hi;
 			const BPWord_t iold = data[i];
 			data[i] &= data[j];
 			data[j] |= iold;
@@ -89,30 +89,32 @@ namespace sh {
 	 * Test vectors are stored in parallelpatterns_from_prefix
 	 * @param prefix Network prefix to use
 	 */
+	template <int N>
 	void prepareTestVectorsFromPrefix(const Network_t& prefix)
 	{
-		bool is_even = ((N % 2) == 0);
+		constexpr bool is_even = ((N % 2) == 0);
 
 		SinglePatternList_t singles;
-		computePrefixOutputs(N, prefix, singles);
+		computePrefixOutputs<N>(prefix, singles);
 
-		std::shuffle(singles.begin(), singles.end(), mtRand); // Shuffle test vectors: improve probability of early rejection of non-sorters
+		std::shuffle(singles.begin(), singles.end(), state::mtRand); // Shuffle test vectors: improve probability of early rejection of non-sorters
 
-		convertToBitParallel(N, singles, use_symmetry && is_even, parallelpatterns_from_prefix);
+		convertToBitParallel<N>(singles, state::use_symmetry && is_even, parallelpatterns_from_prefix);
 	}
 
 	// Initialize "alphabet" of CEs to use
+	template <int N>
 	void initalphabet()
 	{
-		alphabet.clear();
+		state::alphabet.clear();
 		for (int i = 0; i < (N - 1); i++) {
 			const int jsym = N - 1 - i;
 			for (int j = i + 1; j < N; j++) {
 				const int isym = N - 1 - j;
 
-				if (!use_symmetry || (isym > i) || ((isym == i) && (jsym >= j)))
+				if (!state::use_symmetry || (isym > i) || ((isym == i) && (jsym >= j)))
 				{
-					alphabet.push_back(Pair_t(i, j));
+					state::alphabet.push_back(Pair_t(i, j));
 				}
 			}
 		}
@@ -130,7 +132,8 @@ namespace sh {
 	 * @param bpl List of test vectors matching the prefix (regrouped for parallel execution)
 	 * @param failvector Index of first failing vector
 	 */
-	void bumpVectorPosition(BitParallelList_t& bpl, int failvector)
+	template<int N> 
+	void bumpVectorPosition(INOUT BitParallelList_t& bpl, int failvector)
 	{
 		const int groupno = failvector / PARWORDSIZE;
 		const int idx = N * groupno;
@@ -149,7 +152,7 @@ namespace sh {
 		else if (groupno == 1)
 		{
 			// Swap with last bit position of group 0
-			const BPWord_t m0 = static_cast<SortWord_t>(1) << (PARWORDSIZE - 1);
+			constexpr BPWord_t m0 = static_cast<SortWord_t>(1) << (PARWORDSIZE - 1);
 			const BPWord_t m1 = static_cast<SortWord_t>(1) << (failvector % PARWORDSIZE);
 			const int shift = (PARWORDSIZE - 1) - (failvector % PARWORDSIZE);
 			for (int k = 0; k < N; k++)
@@ -182,7 +185,8 @@ namespace sh {
 	 * @param bpl List of test vectors matching the prefix
 	 * @return true if prefix+pairs form a valid sorter
 	 */
-	bool testpairsFromPrefixOutput(const Network_t& pairs, BitParallelList_t& bpl)
+	template <int N>
+	bool testpairsFromPrefixOutput(const Network_t& pairs, INOUT BitParallelList_t& bpl)
 	{
 		int idx = 0;
 		int failvector = 0;
@@ -208,7 +212,7 @@ namespace sh {
 					failvector++;
 				}
 
-				bumpVectorPosition(bpl, failvector);
+				bumpVectorPosition<N>(bpl, failvector);
 
 				return false;
 			}
@@ -226,7 +230,8 @@ namespace sh {
 	 * @param failed_output_pattern First unsorted output pattern detected. Used to determine candidate elements to be appended.
 	 * @return true if prefix+pairs form a valid sorter
 	 */
-	bool testInitialPairsFromPrefixOutput(const Network_t& pairs, const BitParallelList_t& bpl, SortWord_t& failed_output_pattern)
+	template <int N>
+	bool testInitialPairsFromPrefixOutput(const Network_t& pairs, const BitParallelList_t& bpl, INOUT SortWord_t& failed_output_pattern)
 	{
 		int idx = 0;
 		failed_output_pattern = 0;
@@ -270,13 +275,14 @@ namespace sh {
 	 * @param ninputs Number of inputs
 	 * @return Filtered input network
 	 */
-	const Network_t copyValidPairs(const Network_t& nw, int ninputs)
+	template <int N>
+	Network_t copyValidPairs(const Network_t& nw)
 	{
 		Network_t result;
-		result.clear();
+		result.clear(); //TODO reove this clear
 		for (Network_t::const_iterator it = nw.begin(); it != nw.end(); it++)
 		{
-			if ((it->hi < ninputs) && (it->lo < it->hi))
+			if ((it->hi < N) && (it->lo < it->hi))
 			{
 				result.push_back(*it);
 			}
@@ -289,11 +295,12 @@ namespace sh {
 	 * @param prefix [OUT] generated prefix
 	 * @param npairs Number of inputs to the network
 	 */
-	void fillprefixGreedyA(Network_t& prefix, int npairs)
+	template <int N>
+	void fillprefixGreedyA(INOUT Network_t& prefix, int npairs)
 	{
 		prefix.clear();
-		SortWord_t sizetmp = createGreedyPrefix(N, npairs, use_symmetry, prefix, mtRand);
-		if (Verbosity > 1)
+		SortWord_t sizetmp = createGreedyPrefix<N>(npairs, state::use_symmetry, prefix, state::mtRand);
+		if (state::Verbosity > 1)
 		{
 			printf("Greedy prefix size %llu, span %llu.\n", prefix.size(), (size_t)sizetmp);
 		}
@@ -304,11 +311,12 @@ namespace sh {
 	 * @param prefix [OUT] generated prefix
 	 * @param npairs Number of inputs to the network
 	 */
-	void fillprefixFixedThenGreedyA(Network_t& prefix, int npairs)
+	template <int N>
+	void fillprefixFixedThenGreedyA(INOUT Network_t& prefix, int npairs)
 	{
-		prefix = copyValidPairs(FixedPrefix, N);
-		const SortWord_t sizetmp = createGreedyPrefix(N, npairs + static_cast<int>(prefix.size()), use_symmetry, prefix, mtRand);
-		if (Verbosity > 2)
+		prefix = copyValidPairs<N>(state::FixedPrefix);
+		const SortWord_t sizetmp = createGreedyPrefix<N>(npairs + static_cast<int>(prefix.size()), state::use_symmetry, prefix, state::mtRand);
+		if (state::Verbosity > 2)
 		{
 			printf("Hybrid prefix size %llu, span %llu.\n", prefix.size(), (size_t)sizetmp);
 		}
@@ -320,10 +328,10 @@ namespace sh {
 	 * @param newpairs [IN/OUT] candidate network
 	 * @return Positive integer identifying type of mutation applied, or 0 if none.
 	 */
-	u32 attemptMutation(Network_t& newpairs)
+	u32 attemptMutation(INOUT Network_t& newpairs)
 	{
 		u32 applied = 0; // Nothing
-		const u32 mtype = 1 + RANDELEM(mutationSelector);
+		const u32 mtype = 1 + RANDELEM(state::mutationSelector);
 
 		const int new_pairs_size = static_cast<int>(newpairs.size());
 
@@ -389,7 +397,7 @@ namespace sh {
 			if (new_pairs_size > 0)  // Replace a pair at a random position with another random pair
 			{
 				const int a = static_cast<int>(RANDIDX(newpairs));
-				const Pair_t p = RANDELEM(alphabet);
+				const Pair_t p = RANDELEM(state::alphabet);
 				if (newpairs[a] != p)
 				{
 					newpairs[a] = p;
@@ -409,7 +417,7 @@ namespace sh {
 
 				if ((alo != blo) && (alo != bhi) && (ahi != blo) && (ahi != bhi))
 				{
-					const int r2 = mtRand() % 2;
+					const int r2 = state::mtRand() % 2;
 					const ChannelT x = r2 ? bhi : blo;
 					const ChannelT y = r2 ? blo : bhi;
 					newpairs[a].lo = std::min(alo, x);
@@ -449,9 +457,9 @@ namespace sh {
 			{
 				const int a = static_cast<int>(RANDIDX(newpairs));
 				const Pair_t p = newpairs[a];
-				Pair_t q(-1, -1);
+				Pair_t q(0, 0);
 				do {
-					q = RANDELEM(alphabet);
+					q = RANDELEM(state::alphabet);
 				} while ((q.lo != p.lo) && (q.hi != p.lo) && (q.lo != p.hi) && (q.hi != p.hi));
 
 				if (q != p)
@@ -472,28 +480,29 @@ namespace sh {
 	 * Report sorting network if it is an improved (size,depth) combination
 	 * @param nw Valid sorting network
 	 */
+	template <int N>
 	void checkImproved(const Network_t& nw, const Network_t& fixed_prefix)
 	{
 		const int depth = computeDepth(nw);
-		if (conv_hull.improved(static_cast<int>(nw.size()), depth))
+		if (state::conv_hull.improved(static_cast<int>(nw.size()), depth))
 		{
 			/* Print only if the sorter is an improved (size,depth) combination */
-			if ((Verbosity > 1) || (nw.size() <= ((N * (N - 1)) / 2))) // Reduce rubbish listing. Should at least compete with bubble sort before reporting
+			if ((state::Verbosity > 1) || (nw.size() <= ((N * (N - 1)) / 2))) // Reduce rubbish listing. Should at least compete with bubble sort before reporting
 			{
-				printf(" {'N':%u,'L':%llu,'D':%u,'sw':'%s','ESC':%u,'Prefix':%llu,'Postfix':%llu,'nw':", N, nw.size(), depth, VERSION, EscapeRate, prefix.size(), postfix.size());
+				printf(" {'N':%u,'L':%llu,'D':%u,'sw':'%s','ESC':%u,'Prefix':%llu,'Postfix':%llu,'nw':", N, nw.size(), depth, VERSION, state::EscapeRate, fixed_prefix.size(), state::postfix.size());
 				//printnw(nw);
 
 				const bool print_layers = true;
 				if (print_layers) {
 					//const auto layers = tools::linear_to_layers(nw);
-					const auto layers = tools::linear_to_layers(tools::remove_prefix(nw, prefix));
+					const auto layers = tools::linear_to_layers(tools::remove_prefix(nw, fixed_prefix));
 					printf("layers:\n%s\n", tools::layers_to_string_mojo(layers).c_str());
 				}
 				else { // print linear list of ce's
 					printf("\n%s\n", to_string(nw).c_str());
 				}
 
-				conv_hull.print();
+				state::conv_hull.print();
 			}
 		}
 	}
@@ -526,131 +535,83 @@ namespace sh {
 
 using namespace sh;
 
-int main(int argc, char* argv[])
-{
-	// Handle validity of command line options - extremely simple
-	if (argc != 2)
-	{
-		usage();
-		return -1;
-	}
 
-	// Process configuration file
-	if (!cp.parseConfig(argv[1]))
-	{
-		printf("Error parsing config options.\n");
-		static_cast<void>(std::getchar());
-		return -1;
-	}
+template <int N>
+int payload() {
 
-	if (cp.getInt("RandomSeed") != 0u)
+	if ((N % 2) && state::use_symmetry)
 	{
-		RandomSeed = cp.getInt("RandomSeed");
-		mtRand.seed(RandomSeed);
-	}
-
-	N = static_cast<int>(cp.getInt("Ninputs", 0));
-	use_symmetry = (cp.getInt("Symmetric") > 0);
-	force_valid_uphill_step = (cp.getInt("ForceValidUphillStep", 1) > 0);
-	EscapeRate = static_cast<int>(cp.getInt("EscapeRate", 0));
-	MaxMutations = static_cast<int>(cp.getInt("MaxMutations", 1));
-	mutation_type_weights[0] = static_cast<int>(cp.getInt("WeigthRemovePair", 1));
-	mutation_type_weights[1] = static_cast<int>(cp.getInt("WeigthSwapPairs", 1));
-	mutation_type_weights[2] = static_cast<int>(cp.getInt("WeigthReplacePair", 1));
-	mutation_type_weights[3] = static_cast<int>(cp.getInt("WeightCrossPairs", 1));
-	mutation_type_weights[4] = static_cast<int>(cp.getInt("WeightSwapIntersectingPairs", 1));
-	mutation_type_weights[5] = static_cast<int>(cp.getInt("WeightReplaceHalfPair", 1));
-	for (int n = 0; n < NMUTATIONTYPES; n++)
-	{
-		for (int k = 0; k < mutation_type_weights[n]; k++) {
-			mutationSelector.push_back(n);
-		}
-	}
-	if (mutationSelector.empty())
-	{
-		printf("No mutation types selected.\n");
-		exit(1);
-	}
-	PrefixType = static_cast<int>(cp.getInt("PrefixType", 0));
-	FixedPrefix = cp.getNetwork("FixedPrefix");
-	GreedyPrefixSize = static_cast<int>(cp.getInt("GreedyPrefixSize", 0));
-	RestartRate = static_cast<int>(cp.getInt("RestartRate", 0));
-	Verbosity = static_cast<int>(cp.getInt("Verbosity", 1));
-	postfix = cp.getNetwork("Postfix");
-
-	if ((N % 2) && use_symmetry)
-	{
-		if (Verbosity > 0)
+		if (state::Verbosity > 0)
 		{
 			printf("Warning: option 'Symmetric' ignored for odd number of inputs\n");
 		}
-		use_symmetry = false;
+		state::use_symmetry = false;
 	}
 
 	/* Initialize set of CEs to pick from */
-	initalphabet();
+	initalphabet<N>();
 
 	/* Create initial prefix network */
-	switch (PrefixType)
+	switch (state::PrefixType)
 	{
 	case 1: // Fixed prefix
-		prefix = copyValidPairs(FixedPrefix, N);
+		state::prefix = copyValidPairs<N>(state::FixedPrefix);
 		break;
 	case 2: // Greedy algorithm A 
-		fillprefixGreedyA(prefix, GreedyPrefixSize);
+		fillprefixGreedyA<N>(state::prefix, state::GreedyPrefixSize);
 		break;
 	case 3: // Hybrid prefix
-		fillprefixFixedThenGreedyA(prefix, GreedyPrefixSize);
+		fillprefixFixedThenGreedyA<N>(state::prefix, state::GreedyPrefixSize);
 		break;
 	default: // No prefix
-		prefix.clear();
+		state::prefix.clear();
 		break;
 	}
 
-	if (Verbosity > 0)
+	if (state::Verbosity > 0)
 	{
-		printf("Prefix size: %llu\n", prefix.size());
+		printf("Prefix size: %llu\n", state::prefix.size());
 	}
 
 	/* Prepare a set of test vectors matching the prefix */
-	prepareTestVectorsFromPrefix(prefix);
+	prepareTestVectorsFromPrefix<N>(state::prefix);
 
 
 	for (;;) // Outer loop - restart from here if restart is triggered (only applies if RestartRate!=0)
 	{
-		pairs = copyValidPairs(cp.getNetwork("InitialNetwork"), N);
+		state::pairs = copyValidPairs<N>(state::cp.getNetwork("InitialNetwork"));
 
 		// Produce initial solution, simply by adding random pairs until we found a valid network. In case no postfix is present, we demand that the added pair
 		// fixes at least one of the output inversions in the first detected error output vector, so it does at least some useful work to help sorting the outputs.
 		// In case there is a postfix network, this check is not implemented.
 		for (;;)
 		{
-			if (use_symmetry) {
-				symmetricExpansion(N, pairs, se);
+			if (state::use_symmetry) {
+				symmetricExpansion<N>(state::pairs, state::se);
 			}
 			else {
-				se = pairs;
+				state::se = state::pairs;
 			}
-			appendNetwork(se, postfix);
+			appendNetwork(state::se, state::postfix);
 
 			SortWord_t failed_output_pattern;
 
-			if (testInitialPairsFromPrefixOutput(se, parallelpatterns_from_prefix, failed_output_pattern)) {
+			if (testInitialPairsFromPrefixOutput<N>(state::se, parallelpatterns_from_prefix, failed_output_pattern)) {
 				break;
 			}
-			Pair_t p = Pair_t(-1, -1);
+			Pair_t p = Pair_t(0, 0);
 
-			if (postfix.size() == 0) // Empty postfix: find a pattern that fixes an arbitrary inversion in the first failed output
+			if (state::postfix.size() == 0) // Empty postfix: find a pattern that fixes an arbitrary inversion in the first failed output
 			{
 				bool found_useful_ce = false;
 				do {
-					p = RANDELEM(alphabet);
+					p = RANDELEM(state::alphabet);
 
 					if ((((failed_output_pattern >> p.lo) & 1) == 1) && (((failed_output_pattern >> p.hi) & 1) == 0)) {
 						found_useful_ce = true;
 					}
 
-					if (use_symmetry)
+					if (state::use_symmetry)
 					{
 						if ((((failed_output_pattern >> ((N - 1) - p.hi)) & 1) == 1) && (((failed_output_pattern >> ((N - 1) - p.lo)) & 1) == 0)) {
 							found_useful_ce = true;
@@ -661,30 +622,30 @@ int main(int argc, char* argv[])
 			}
 			else // In case of postfix: just append a random initial pair to the core network, cannot directly determine good candidate from failed output pattern.
 			{
-				p = RANDELEM(alphabet);
+				p = RANDELEM(state::alphabet);
 			}
 
-			pairs.push_back(std::move(p));
+			state::pairs.push_back(std::move(p));
 		}
 
 		Network_t totalnw;
-		concatNetwork(prefix, se, totalnw);
+		concatNetwork(state::prefix, state::se, totalnw);
 
-		if (Verbosity > 1)
+		if (state::Verbosity > 1)
 		{
 			printf("Initial network size: %llu\n", totalnw.size());
 		}
 
-		checkImproved(totalnw, prefix);
+		checkImproved<N>(totalnw, state::prefix);
 
 		for (;;) // Program never ends, keep trying to improve, we may restart in the outer loop however.
 		{
-			if (Verbosity > 2)
+			if (state::Verbosity > 2)
 			{
 				itercount++;
 				if (itercount >= iter_next_report)
 				{
-					clock_t t2 = clock();
+					const clock_t t2 = clock();
 
 					if ((t2 > t1) && (t2 > t0))
 					{
@@ -701,19 +662,19 @@ int main(int argc, char* argv[])
 			/* Determine number of mutations to use in this iteration */
 			u32 nmods = 1;
 
-			if (MaxMutations > 1)
+			if (state::MaxMutations > 1)
 			{
-				nmods += mtRand() % MaxMutations;
+				nmods += state::mtRand() % state::MaxMutations;
 			}
 
 			/* Create a copy of the accepted set of pairs */
-			newpairs = pairs;
+			state::newpairs = state::pairs;
 
 			/* Apply the mutations */
 			u32 modcount = 0;
 			while (modcount < nmods)
 			{
-				u32 r = attemptMutation(newpairs);
+				u32 r = attemptMutation(state::newpairs);
 				if (r != 0)
 				{
 					modcount++;
@@ -721,37 +682,37 @@ int main(int argc, char* argv[])
 			}
 
 			/* Create a symmetric expansion of the modified pairs (or just a copy if non-symmetric network) */
-			if (use_symmetry)
+			if (state::use_symmetry)
 			{
-				symmetricExpansion(N, newpairs, se);
+				symmetricExpansion<N>(state::newpairs, state::se);
 			}
 			else
 			{
-				se = newpairs;
+				state::se = state::newpairs;
 			}
 
-			appendNetwork(se, postfix);
+			appendNetwork(state::se, state::postfix);
 
 			/* Test whether the new postfix network yields a valid sorter when combined with the prefix */
-			if ((se.size() > 0) && testpairsFromPrefixOutput(se, parallelpatterns_from_prefix))
+			if ((state::se.size() > 0) && testpairsFromPrefixOutput<N>(state::se, parallelpatterns_from_prefix))
 			{
-				concatNetwork(prefix, se, totalnw);
+				concatNetwork(state::prefix, state::se, totalnw);
 
 				/* Accept the new postfix */
-				pairs = newpairs;
+				state::pairs = state::newpairs;
 
-				checkImproved(totalnw, prefix);
+				checkImproved<N>(totalnw, state::prefix);
 			}
 
 			/* With low probability, add another pair random pair at a random place. Attempt to escape from local optimum. */
-			if ((EscapeRate > 0) && ((mtRand() % EscapeRate) == 0))
+			if ((state::EscapeRate > 0) && ((state::mtRand() % state::EscapeRate) == 0))
 			{
-				const int a = static_cast<int>(mtRand() % (pairs.size() + 1)); // Random insertion position
-				Pair_t p = RANDELEM(alphabet);
+				const int a = static_cast<int>(state::mtRand() % (state::pairs.size() + 1)); // Random insertion position
+				Pair_t p = RANDELEM(state::alphabet);
 
 				// Determine if the random pair p could be added in the last layer
 				bool hit_successor = false;
-				for (Network_t::const_iterator it = pairs.begin() + a; it != pairs.end(); it++)
+				for (Network_t::const_iterator it = state::pairs.begin() + a; it != state::pairs.end(); it++)
 				{
 					if ((it->lo == p.lo) || (it->hi == p.lo) || (it->lo == p.hi) || (it->hi == p.hi))
 					{
@@ -760,33 +721,33 @@ int main(int argc, char* argv[])
 					}
 				}
 
-				if (force_valid_uphill_step && hit_successor)
+				if (state::force_valid_uphill_step && hit_successor)
 				{
-					pairs.insert(pairs.begin() + a, pairs[a]); // Prepend duplicate of existing pair right in front of it => Sorter with redundant pair will remain valid
+					state::pairs.insert(state::pairs.begin() + a, state::pairs[a]); // Prepend duplicate of existing pair right in front of it => Sorter with redundant pair will remain valid
 				}
 				else
 				{
-					pairs.insert(pairs.begin() + a, p); // Add random pair at the end of the network
+					state::pairs.insert(state::pairs.begin() + a, p); // Add random pair at the end of the network
 				}
 			}
 
-			if ((RestartRate > 0) && ((mtRand() % RestartRate) == 0))
+			if ((state::RestartRate > 0) && ((state::mtRand() % state::RestartRate) == 0))
 			{
-				if (Verbosity > 1)
+				if (state::Verbosity > 1)
 				{
 					printf("Restart.\n");
 				}
-				switch (PrefixType) // Recompute prefix if not fixed
+				switch (state::PrefixType) // Recompute prefix if not fixed
 				{
 				case 1: // Fixed prefix - no update: vectors remain the same after restart
 					break;
 				case 2: // Greedy algorithm A 
-					fillprefixGreedyA(prefix, GreedyPrefixSize);
-					prepareTestVectorsFromPrefix(prefix);
+					fillprefixGreedyA<N>(state::prefix, state::GreedyPrefixSize);
+					prepareTestVectorsFromPrefix<N>(state::prefix);
 					break;
 				case 3: // Hybrid prefix
-					fillprefixFixedThenGreedyA(prefix, GreedyPrefixSize);
-					prepareTestVectorsFromPrefix(prefix);
+					fillprefixFixedThenGreedyA<N>(state::prefix, state::GreedyPrefixSize);
+					prepareTestVectorsFromPrefix<N>(state::prefix);
 					break;
 				default: // No prefix - no update: vectors remain the same after restart
 					break;
@@ -796,6 +757,324 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
+	return 0; // unreachable
+}
 
-	return 0;
+
+int main(int argc, char* argv[])
+{
+	// Handle validity of command line options - extremely simple
+	if (argc != 2)
+	{
+		usage();
+		return -1;
+	}
+
+	// Process configuration file
+	if (!state::cp.parseConfig(argv[1]))
+	{
+		printf("Error parsing config options.\n");
+		static_cast<void>(std::getchar());
+		return -1;
+	}
+
+	if (state::cp.getInt("RandomSeed") != 0u)
+	{
+		state::RandomSeed = state::cp.getInt("RandomSeed");
+		state::mtRand.seed(state::RandomSeed);
+	}
+
+	const int n_inputs = static_cast<int>(state::cp.getInt("Ninputs", 0));
+	state::use_symmetry = (state::cp.getInt("Symmetric") > 0);
+	state::force_valid_uphill_step = (state::cp.getInt("ForceValidUphillStep", 1) > 0);
+	state::EscapeRate = static_cast<int>(state::cp.getInt("EscapeRate", 0));
+	state::MaxMutations = static_cast<int>(state::cp.getInt("MaxMutations", 1));
+	state::mutation_type_weights[0] = static_cast<int>(state::cp.getInt("WeigthRemovePair", 1));
+	state::mutation_type_weights[1] = static_cast<int>(state::cp.getInt("WeigthSwapPairs", 1));
+	state::mutation_type_weights[2] = static_cast<int>(state::cp.getInt("WeigthReplacePair", 1));
+	state::mutation_type_weights[3] = static_cast<int>(state::cp.getInt("WeightCrossPairs", 1));
+	state::mutation_type_weights[4] = static_cast<int>(state::cp.getInt("WeightSwapIntersectingPairs", 1));
+	state::mutation_type_weights[5] = static_cast<int>(state::cp.getInt("WeightReplaceHalfPair", 1));
+	for (int n = 0; n < state::NMUTATIONTYPES; n++)
+	{
+		for (int k = 0; k < state::mutation_type_weights[n]; k++) {
+			state::mutationSelector.push_back(n);
+		}
+	}
+	if (state::mutationSelector.empty())
+	{
+		printf("No mutation types selected.\n");
+		exit(1);
+	}
+	state::PrefixType = static_cast<int>(state::cp.getInt("PrefixType", 0));
+	state::FixedPrefix = state::cp.getNetwork("FixedPrefix");
+	state::GreedyPrefixSize = static_cast<int>(state::cp.getInt("GreedyPrefixSize", 0));
+	state::RestartRate = static_cast<int>(state::cp.getInt("RestartRate", 0));
+	state::Verbosity = static_cast<int>(state::cp.getInt("Verbosity", 1));
+	state::postfix = state::cp.getNetwork("Postfix");
+
+
+	for (int i = 2; i < 256; ++i) {
+		std::cout << "   case " << i << ": return payload<" << i << ">();" << std::endl;
+	}
+
+	switch (n_inputs) {
+	case 2: return payload<2>();
+	case 3: return payload<3>();
+	case 4: return payload<4>();
+	case 5: return payload<5>();
+	case 6: return payload<6>();
+	case 7: return payload<7>();
+	case 8: return payload<8>();
+	case 9: return payload<9>();
+	case 10: return payload<10>();
+	case 11: return payload<11>();
+	case 12: return payload<12>();
+	case 13: return payload<13>();
+	case 14: return payload<14>();
+	case 15: return payload<15>();
+	case 16: return payload<16>();
+	case 17: return payload<17>();
+	case 18: return payload<18>();
+	case 19: return payload<19>();
+	case 20: return payload<20>();
+	case 21: return payload<21>();
+	case 22: return payload<22>();
+	case 23: return payload<23>();
+	case 24: return payload<24>();
+	case 25: return payload<25>();
+	case 26: return payload<26>();
+	case 27: return payload<27>();
+	case 28: return payload<28>();
+	case 29: return payload<29>();
+	case 30: return payload<30>();
+	case 31: return payload<31>();
+	case 32: return payload<32>();
+	case 33: return payload<33>();
+	case 34: return payload<34>();
+	case 35: return payload<35>();
+	case 36: return payload<36>();
+	case 37: return payload<37>();
+	case 38: return payload<38>();
+	case 39: return payload<39>();
+	case 40: return payload<40>();
+	case 41: return payload<41>();
+	case 42: return payload<42>();
+	case 43: return payload<43>();
+	case 44: return payload<44>();
+	case 45: return payload<45>();
+	case 46: return payload<46>();
+	case 47: return payload<47>();
+	case 48: return payload<48>();
+	case 49: return payload<49>();
+	case 50: return payload<50>();
+	case 51: return payload<51>();
+	case 52: return payload<52>();
+	case 53: return payload<53>();
+	case 54: return payload<54>();
+	case 55: return payload<55>();
+	case 56: return payload<56>();
+	case 57: return payload<57>();
+	case 58: return payload<58>();
+	case 59: return payload<59>();
+	case 60: return payload<60>();
+	case 61: return payload<61>();
+	case 62: return payload<62>();
+	case 63: return payload<63>();
+	case 64: return payload<64>();
+	case 65: return payload<65>();
+	case 66: return payload<66>();
+	case 67: return payload<67>();
+	case 68: return payload<68>();
+	case 69: return payload<69>();
+	case 70: return payload<70>();
+	case 71: return payload<71>();
+	case 72: return payload<72>();
+	case 73: return payload<73>();
+	case 74: return payload<74>();
+	case 75: return payload<75>();
+	case 76: return payload<76>();
+	case 77: return payload<77>();
+	case 78: return payload<78>();
+	case 79: return payload<79>();
+	case 80: return payload<80>();
+	case 81: return payload<81>();
+	case 82: return payload<82>();
+	case 83: return payload<83>();
+	case 84: return payload<84>();
+	case 85: return payload<85>();
+	case 86: return payload<86>();
+	case 87: return payload<87>();
+	case 88: return payload<88>();
+	case 89: return payload<89>();
+	case 90: return payload<90>();
+	case 91: return payload<91>();
+	case 92: return payload<92>();
+	case 93: return payload<93>();
+	case 94: return payload<94>();
+	case 95: return payload<95>();
+	case 96: return payload<96>();
+	case 97: return payload<97>();
+	case 98: return payload<98>();
+	case 99: return payload<99>();
+	case 100: return payload<100>();
+	case 101: return payload<101>();
+	case 102: return payload<102>();
+	case 103: return payload<103>();
+	case 104: return payload<104>();
+	case 105: return payload<105>();
+	case 106: return payload<106>();
+	case 107: return payload<107>();
+	case 108: return payload<108>();
+	case 109: return payload<109>();
+	case 110: return payload<110>();
+	case 111: return payload<111>();
+	case 112: return payload<112>();
+	case 113: return payload<113>();
+	case 114: return payload<114>();
+	case 115: return payload<115>();
+	case 116: return payload<116>();
+	case 117: return payload<117>();
+	case 118: return payload<118>();
+	case 119: return payload<119>();
+	case 120: return payload<120>();
+	case 121: return payload<121>();
+	case 122: return payload<122>();
+	case 123: return payload<123>();
+	case 124: return payload<124>();
+	case 125: return payload<125>();
+	case 126: return payload<126>();
+	case 127: return payload<127>();
+	case 128: return payload<128>();
+	case 129: return payload<129>();
+	case 130: return payload<130>();
+	case 131: return payload<131>();
+	case 132: return payload<132>();
+	case 133: return payload<133>();
+	case 134: return payload<134>();
+	case 135: return payload<135>();
+	case 136: return payload<136>();
+	case 137: return payload<137>();
+	case 138: return payload<138>();
+	case 139: return payload<139>();
+	case 140: return payload<140>();
+	case 141: return payload<141>();
+	case 142: return payload<142>();
+	case 143: return payload<143>();
+	case 144: return payload<144>();
+	case 145: return payload<145>();
+	case 146: return payload<146>();
+	case 147: return payload<147>();
+	case 148: return payload<148>();
+	case 149: return payload<149>();
+	case 150: return payload<150>();
+	case 151: return payload<151>();
+	case 152: return payload<152>();
+	case 153: return payload<153>();
+	case 154: return payload<154>();
+	case 155: return payload<155>();
+	case 156: return payload<156>();
+	case 157: return payload<157>();
+	case 158: return payload<158>();
+	case 159: return payload<159>();
+	case 160: return payload<160>();
+	case 161: return payload<161>();
+	case 162: return payload<162>();
+	case 163: return payload<163>();
+	case 164: return payload<164>();
+	case 165: return payload<165>();
+	case 166: return payload<166>();
+	case 167: return payload<167>();
+	case 168: return payload<168>();
+	case 169: return payload<169>();
+	case 170: return payload<170>();
+	case 171: return payload<171>();
+	case 172: return payload<172>();
+	case 173: return payload<173>();
+	case 174: return payload<174>();
+	case 175: return payload<175>();
+	case 176: return payload<176>();
+	case 177: return payload<177>();
+	case 178: return payload<178>();
+	case 179: return payload<179>();
+	case 180: return payload<180>();
+	case 181: return payload<181>();
+	case 182: return payload<182>();
+	case 183: return payload<183>();
+	case 184: return payload<184>();
+	case 185: return payload<185>();
+	case 186: return payload<186>();
+	case 187: return payload<187>();
+	case 188: return payload<188>();
+	case 189: return payload<189>();
+	case 190: return payload<190>();
+	case 191: return payload<191>();
+	case 192: return payload<192>();
+	case 193: return payload<193>();
+	case 194: return payload<194>();
+	case 195: return payload<195>();
+	case 196: return payload<196>();
+	case 197: return payload<197>();
+	case 198: return payload<198>();
+	case 199: return payload<199>();
+	case 200: return payload<200>();
+	case 201: return payload<201>();
+	case 202: return payload<202>();
+	case 203: return payload<203>();
+	case 204: return payload<204>();
+	case 205: return payload<205>();
+	case 206: return payload<206>();
+	case 207: return payload<207>();
+	case 208: return payload<208>();
+	case 209: return payload<209>();
+	case 210: return payload<210>();
+	case 211: return payload<211>();
+	case 212: return payload<212>();
+	case 213: return payload<213>();
+	case 214: return payload<214>();
+	case 215: return payload<215>();
+	case 216: return payload<216>();
+	case 217: return payload<217>();
+	case 218: return payload<218>();
+	case 219: return payload<219>();
+	case 220: return payload<220>();
+	case 221: return payload<221>();
+	case 222: return payload<222>();
+	case 223: return payload<223>();
+	case 224: return payload<224>();
+	case 225: return payload<225>();
+	case 226: return payload<226>();
+	case 227: return payload<227>();
+	case 228: return payload<228>();
+	case 229: return payload<229>();
+	case 230: return payload<230>();
+	case 231: return payload<231>();
+	case 232: return payload<232>();
+	case 233: return payload<233>();
+	case 234: return payload<234>();
+	case 235: return payload<235>();
+	case 236: return payload<236>();
+	case 237: return payload<237>();
+	case 238: return payload<238>();
+	case 239: return payload<239>();
+	case 240: return payload<240>();
+	case 241: return payload<241>();
+	case 242: return payload<242>();
+	case 243: return payload<243>();
+	case 244: return payload<244>();
+	case 245: return payload<245>();
+	case 246: return payload<246>();
+	case 247: return payload<247>();
+	case 248: return payload<248>();
+	case 249: return payload<249>();
+	case 250: return payload<250>();
+	case 251: return payload<251>();
+	case 252: return payload<252>();
+	case 253: return payload<253>();
+	case 254: return payload<254>();
+	case 255: return payload<255>();
+	default:
+		std::cout << "payload for N = " << n_inputs << " is not implemented." << std::endl;
+		return 0;
+	}
 }
