@@ -10,6 +10,9 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{6f8540c9-df81-4f67-b495-e83afb850cef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\slimccplib">
+      <UniqueIdentifier>{c9845171-b268-45c2-a49f-e01cbc30885a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\LICENSE">
@@ -52,6 +55,30 @@
     </ClInclude>
     <ClInclude Include="..\..\State.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\slimcpplib\long_fixdiv.h">
+      <Filter>Header Files\slimccplib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\slimcpplib\long_int.h">
+      <Filter>Header Files\slimccplib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\slimcpplib\long_io.h">
+      <Filter>Header Files\slimccplib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\slimcpplib\long_math.h">
+      <Filter>Header Files\slimccplib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\slimcpplib\long_math_gcc.h">
+      <Filter>Header Files\slimccplib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\slimcpplib\long_math_long.h">
+      <Filter>Header Files\slimccplib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\slimcpplib\long_math_msvc.h">
+      <Filter>Header Files\slimccplib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\slimcpplib\long_uint.h">
+      <Filter>Header Files\slimccplib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
