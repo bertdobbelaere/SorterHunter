@@ -27,6 +27,7 @@
  */
 
 #pragma once
+#include <vector>
 #include <random>
 #include <bitset>
 #include <string>
@@ -40,15 +41,15 @@ namespace sh {
 	 * @param nw Input network
 	 * @return Number of parallel operation layers
 	 */
-	inline [[nodiscard]] int computeDepth(const Network_t& nw)
+	[[nodiscard]] inline int computeDepth(const Network_t& nw) 
 	{
 		std::vector<SortWord_t> layers;
 		int nLayers = 0;
 
 		for (const Pair_t& p : nw)
 		{
-			const SortWord_t xi = (static_cast<SortWord_t>(1) << p.lo);
-			const SortWord_t xj = (static_cast<SortWord_t>(1) << p.hi);
+			const SortWord_t xi = static_cast<SortWord_t>(1) << p.lo;
+			const SortWord_t xj = static_cast<SortWord_t>(1) << p.hi;
 			const SortWord_t y = (xi | xj);
 
 			int matchIdx = nLayers;
@@ -114,7 +115,7 @@ namespace sh {
 		printf("}\r\n");
 	}
 
-	inline std::string to_string(const Network_t& nw)
+	[[nodiscard]] inline std::string to_string(const Network_t& nw)
 	{
 		const int size = static_cast<int>(nw.size());
 		std::string result = "";

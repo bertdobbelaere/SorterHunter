@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <array>
+#include <string>
+#include <iostream> // std::cout
 
 #include "htypes.h"
 
@@ -23,7 +25,7 @@ namespace sh {
 	class ClusterGroup {
 	private:
 		//int N; ///< Total number of inputs (and outputs) of the network
-		std::array<SinglePatternList_t, ClusterGroup::N> pattern_lists; ///< Sorted list of output patterns from each cluster of lines
+		std::array<SinglePatternList_t, N> pattern_lists; ///< Sorted list of output patterns from each cluster of lines
 		std::array<SortWord_t, N> masks; ///< Masks for each cluster marking the applicable lines for each cluster
 		std::array<int, N> clusterAlloc; ///< Allocations of lines to clusters
 
@@ -103,17 +105,19 @@ namespace sh {
 
 			for (int k = 0; k < N; k++)
 			{
-				if (masks[k] != 0) {
-					const auto& x = pattern_lists[k];
-					pLists[n_to_combine++] = &x;
+				if (this->masks[k] != 0) {
+					const auto& x = this->pattern_lists[k];
+					pLists[n_to_combine] = &x;
+					n_to_combine++;
 				}
 			}
+			//std::cout << "computeOutputs: n_to_combine = " << n_to_combine << std::endl;
 
 			assert(n_to_combine > 0);
 
 			int level = 0;
 			
-			std::array<size_t, NMAX> indices;
+			std::array<int, NMAX> indices;
 			std::array<SortWord_t, NMAX> outmasks;
 			indices.fill(0);
 			outmasks.fill(0);
@@ -121,29 +125,40 @@ namespace sh {
 
 			while (level >= 0)
 			{
-				if (indices[level] < pLists[level]->size())
+				const int x = static_cast<int>(pLists[level]->size());
+				if (indices[level] < x)
 				{
+					const int idx = indices[level];
+					const SinglePatternList_t* const y = pLists[level];
+					const SortWord_t z = (*y)[idx];
+						
 					if (level == 0) {
-						outmasks[level] = (*pLists[level])[indices[level]];
+						outmasks[level] = z;
+						//std::cout << "computeOutputs: A1: outmasks[" << level << "]=z" << std::endl;
 					}
 					else {
-						outmasks[level] = outmasks[level - 1] | (*pLists[level])[indices[level]];
+						outmasks[level] = outmasks[level - 1] | z;
+						//std::cout << "computeOutputs: A2: outmasks[" << level << "]=z" << std::endl;
 					}
+
 					if (level < (n_to_combine - 1))
 					{
 						indices[level + 1] = 0;
 						indices[level]++;
 						level++;
+						//std::cout << "computeOutputs: B1: level=" << level << std::endl;
 					}
 					else
 					{
 						patterns.push_back(outmasks[level]);
 						indices[level]++;
+						//std::cout << "computeOutputs: B2: indices[" << level << "]=" << indices[level] << std::endl;
 					}
 				}
 				else
 				{
 					level--;
+					//std::cout << "computeOutputs: C: level=" << level << std::endl;
 				}
 			}
 		}

@@ -2,11 +2,11 @@
 # Note: keys are case sensitive.
 
 # Number of inputs to the sorting network (no default)
-Ninputs=16
+Ninputs=8
 
 # Assume symmetric network (=1) or not (=0)
 # Symmetric networks allow faster searches and give with few exceptions the best results for even values of Ninputs.
-Symmetric=1
+Symmetric=0
 
 # Random seed. Set to value different from 0 to create reproducible results or omit for "practically undeterministic" random to improve chances over multiple runs
 #RandomSeed=124
@@ -16,10 +16,10 @@ EscapeRate=250
 
 # Forcing the uphill step (see EscapeRate) not to break a valid sorter. When set to >0, an inserted pair that would affect the sorting result will be changed into a duplicate of the next pair.
 # This gives empirically slightly better results than earlier version that didn't support this option. Default is 1.
-#ForceValidUphillStep = 1
+ForceValidUphillStep = 1
 
 # Maximum number of mutations per iteration. Default 1.
-MaxMutations = 2
+MaxMutations = 1
 
 # Relative probabilities of mutation types (integer >=0). Not all must be 0. Don't use huge values (total<10000 is no issue), as a table is allocated for the probability distribution 
 WeigthRemovePair = 1              # Remove a random pair
@@ -42,21 +42,20 @@ PrefixType = 0
 
 # Specify fixed prefix as comma separated list of pairs. Inputs are 0 based.
 # Only relevant if PrefixType = 1 or 3
-# Net_8_8: first 8 nodes are sorted, next 8 nodes are also sorted:
-#FixedPrefix=(0,2),(1,3),(4,6),(5,7),(8,10),(9,11),(12,14),(13,15),(0,4),(1,5),(2,6),(3,7),(8,12),(9,13),(10,14),(11,15),(0,1),(2,3),(4,5),(6,7),(8,9),(10,11),(12,13),(14,15),(2,4),(3,5),(10,12),(11,13),(1,4),(3,6),(9,12),(11,14),(1,2),(3,4),(5,6),(9,10),(11,12),(13,14)
+# FixedPrefix=(0,2),(1,3),(4,6),(5,7),(0,4),(1,5),(2,6),(3,7),(0,1),(2,3),(4,5),(6,7),(2,4),(3,5),(1,4),(3,6),(1,2),(3,4),(5,6)]
 
 # Postfix network to finish the sorter. One application is to search for median detecting networks.
 # e.g. to find a network just outputing the median of Ninputs=7 inputs, define postfix (0,1),(1,2),(0,1),(4,5),(5,6),(4,5), then find a sorter and just strip the postfix afterwards.
-#Postfix=(4,5),(14,15)
+Postfix=(0,2),(1,3),(0,1),(2,3),(1,2),(4,6),(5,7),(4,5),(6,7),(5,6) 
 
 # Specify initial network (after prefix, if applicable) as comma separated list of pairs. Inputs are 0 based.
 # Pairs containing input indices >= Ninputs will be silently removed (allows reduction of larger known good networks)
 # Note that if Symmetric=1 the pairs in InitialNetwork will be subject to mirroring and duplication.
 # This feature can be used to try to improve an existing network. Default: empty.
-#InitialNetwork=(0,1)
+# InitialNetwork=(0,2),(1,3),(4,6),(5,7),(0,4),(1,5),(2,6),(3,7),(0,1),(2,3),(4,5),(6,7),(2,4),(3,5),(1,4),(3,6),(1,2),(3,4),(5,6)
 
 # Inverse probablity per iteration to start over. This is one of the strategies to escape a local minimum. Default: no restart
-#RestartRate=1000000000
+RestartRate=10000
 
 # Modify overall verbosity level: 
 # 0:minimal

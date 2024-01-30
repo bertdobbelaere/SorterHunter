@@ -36,7 +36,7 @@ namespace sh::state {
 
 	constexpr int NMUTATIONTYPES = 6; ///< Number of different mutation types
 	int mutation_type_weights[NMUTATIONTYPES]; ///< Relative probabilities for each mutation type
-	std::vector<u8> mutationSelector; ///< Helper variable to quickly pick a mutation with the requested probability.
+	std::vector<int> mutationSelector; ///< Helper variable to quickly pick a mutation with the requested probability.
 
 	// Random generation
 	std::random_device rd;

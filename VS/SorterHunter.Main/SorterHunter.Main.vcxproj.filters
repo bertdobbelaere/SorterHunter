@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
+    <ClCompile Include="..\..\SorterHunter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -33,6 +33,12 @@
       <Filter>Resource Files</Filter>
     </Text>
     <Text Include="..\..\sample_config_128.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="..\..\sample_config_4x4.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="..\..\sample_config_k4top8.txt">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>

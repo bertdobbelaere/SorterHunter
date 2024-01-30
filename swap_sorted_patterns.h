@@ -30,7 +30,7 @@ namespace sh {
 		int idxp = 0;
 		int idxnp = 0;
 		const int l = static_cast<int>(patterns.size());
-		std::cout << "swap_sorted_patterns; l=" << l << std::endl;
+		//std::cout << "swap_sorted_patterns; l=" << l << std::endl;
 
 
 		SortWord_t last = static_cast<SortWord_t>(-1);

@@ -30,6 +30,8 @@
 #include <stdint.h>
 #include <vector>
 
+#include "slimcpplib/long_uint.h"
+
 namespace sh {
 	#define INOUT
 
@@ -39,10 +41,12 @@ namespace sh {
 		template <> struct TypeChooser<16> { using Type = uint16_t; };
 		template <> struct TypeChooser<32> { using Type = uint32_t; };
 		template <> struct TypeChooser<64> { using Type = uint64_t; };
+		template <> struct TypeChooser<128> { using Type = slim::uint128_t; };
+		template <> struct TypeChooser<256> { using Type = slim::uint256_t; };
 	}
 
-	constexpr int NMAX = 64;
-	constexpr int PARWORDSIZE = 64;
+	constexpr int NMAX = 8;
+	constexpr int PARWORDSIZE = 8;
 	using SortWord_t = TypeChooser<NMAX>::Type;
 	using BPWord_t = TypeChooser<PARWORDSIZE>::Type;
 
@@ -58,8 +62,9 @@ namespace sh {
 	struct Pair_t {
 		ChannelT lo, hi; ///< low and high line indices connected by the element
 		bool operator==(const Pair_t& p) const { return (lo == p.lo) && (hi == p.hi); }
+		bool operator!=(const Pair_t& p) const { return (lo != p.lo) || (hi != p.hi); }
 
-		explicit Pair_t(ChannelT lo, ChannelT hi) : lo(lo), hi(hi) {}
+		constexpr Pair_t(ChannelT lo, ChannelT hi) : lo(lo), hi(hi) {}
 	};
 
 	using Network_t = std::vector<Pair_t>;

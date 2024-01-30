@@ -39,6 +39,7 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)../..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level4</WarningLevel>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link />
   </ItemDefinitionGroup>
@@ -47,13 +48,14 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
       <AdditionalIncludeDirectories>$(ProjectDir)../..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level4</WarningLevel>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link />
     <ProjectReference />
     <Link />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="..\..\SorterHunter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SorterHunter.Lib\SorterHunter.Lib.vcxproj">
@@ -65,7 +67,9 @@
     <Text Include="..\..\sample_config_128.txt" />
     <Text Include="..\..\sample_config_16x16.txt" />
     <Text Include="..\..\sample_config_32x32.txt" />
+    <Text Include="..\..\sample_config_4x4.txt" />
     <Text Include="..\..\sample_config_8x8.txt" />
+    <Text Include="..\..\sample_config_k4top8.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

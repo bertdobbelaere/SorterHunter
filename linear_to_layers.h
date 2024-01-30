@@ -38,7 +38,8 @@
 
 namespace sh::tools {
 
-    inline [[nodiscard]] std::vector<Pair_t> remove_prefix(const std::vector<Pair_t>& net, const std::vector<Pair_t>& prefix) {
+    [[nodiscard]] inline std::vector<Pair_t> remove_prefix(const std::vector<Pair_t>& net, const std::vector<Pair_t>& prefix) {
+        const int net_size = static_cast<int>(net.size());
         const int prefix_size = static_cast<int>(prefix.size());
         for (int i = 0; i < prefix_size; ++i) {
             const Pair_t& p1 = net.at(i);
@@ -48,14 +49,31 @@ namespace sh::tools {
             }
         }
         std::vector<Pair_t> result;
-        for (int i = prefix_size; i< static_cast<int>(net.size()); ++i) {
+        for (int i = prefix_size; i < net_size; ++i) {
+            result.push_back(net.at(i));
+        }
+        return result;
+    }
+
+    [[nodiscard]] inline std::vector<Pair_t> remove_postfix(const std::vector<Pair_t>& net, const std::vector<Pair_t>& postfix) {
+        const int net_size = static_cast<int>(net.size());
+        const int postfix_size = static_cast<int>(postfix.size());
+        for (int i = 0; i < postfix_size; ++i) {
+            const Pair_t& p1 = net.at((net_size - 1) - i);
+            const Pair_t& p2 = postfix.at((postfix_size - 1) - i);
+            if ((p1.hi != p2.hi) || (p1.lo != p2.lo)) {
+                std::cout << "ERROR remove_postfix: investigate!" << std::endl;
+            }
+        }
+        std::vector<Pair_t> result;
+        for (int i = 0; i < (net_size - postfix_size); ++i) {
             result.push_back(net.at(i));
         }
         return result;
     }
 
     // Converts a linear network representation as pairs into a layer representation.
-    inline [[nodiscard]] std::vector<std::vector<std::pair<int, int>>> linear_to_layers(const std::vector<std::pair<int, int>>& input_lst)
+    [[nodiscard]] inline std::vector<std::vector<std::pair<int, int>>> linear_to_layers(const std::vector<std::pair<int, int>>& input_lst)
     {
         std::vector<std::vector<std::pair<int, int>>> result;
         std::unordered_map<int, int> lbl_state;
@@ -87,7 +105,7 @@ namespace sh::tools {
     }
 
     // Converts a linear network representation as pairs into a layer representation.
-    inline [[nodiscard]] std::vector<std::vector<std::pair<int, int>>> linear_to_layers(const std::vector<Pair_t>& input_lst) {
+    [[nodiscard]] inline std::vector<std::vector<std::pair<int, int>>> linear_to_layers(const std::vector<Pair_t>& input_lst) {
         std::vector<std::pair<int, int>> tmp;
         for (const Pair_t& p : input_lst) {
             tmp.push_back(std::make_pair(p.lo, p.hi));
@@ -95,7 +113,7 @@ namespace sh::tools {
         return linear_to_layers(tmp);
     }
 
-    inline [[nodiscard]] std::string layers_to_string(const std::vector<std::vector<std::pair<int, int>>>& layers)
+    [[nodiscard]] inline std::string layers_to_string(const std::vector<std::vector<std::pair<int, int>>>& layers)
     {
         std::stringstream ss;
         for (const auto& layer : layers) 
@@ -114,7 +132,7 @@ namespace sh::tools {
         return ss.str();
     }
 
-    inline [[nodiscard]] std::string layers_to_string_mojo(const std::vector<std::vector<std::pair<int, int>>>& layers)
+    [[nodiscard]] inline std::string layers_to_string_mojo(const std::vector<std::vector<std::pair<int, int>>>& layers)
     {
         std::stringstream ss;
         int layer_id = 0;

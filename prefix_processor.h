@@ -138,7 +138,7 @@ namespace sh {
 	void convertToBitParallel(const SinglePatternList_t& singles, bool use_symmetry, INOUT BitParallelList_t& parallels)
 	{
 		int level = 0;
-		std::array<BPWord_t, NMAX> buffer;
+		std::array<BPWord_t, N> buffer;
 		parallels.clear();
 
 		state::all_n_inputs_mask = 0;
@@ -188,7 +188,7 @@ namespace sh {
 
 		if (state::Verbosity > 2)
 		{
-			printf("Debug: Pattern conversion: %llu single inputs -> %llu parallel words (%u * %llu) (symmetry:%d)\n", singles.size(), parallels.size(), N, parallels.size() / N, use_symmetry);
+			std::cout << "Debug: Pattern conversion: " << singles.size() << " single inputs -> " << parallels.size() << " parallel words (" << N << " * " << (parallels.size() / N) << ") (symmetry:" << use_symmetry << " )" << std::endl;
 		}
 	}
 
@@ -204,11 +204,11 @@ namespace sh {
 	 * @return Number of outputs from partially ordered network (ninputs+1 if fully sorted, 2**ninputs worst case)
 	 */
 
-	template <int N> SortWord_t createGreedyPrefix(int maxpairs, bool use_symmetry, INOUT Network_t& prefix, INOUT RandGen_t& rndgen)
+	template <int N> [[nodiscard]] SortWord_t createGreedyPrefix(int maxpairs, bool use_symmetry, INOUT Network_t& prefix, INOUT RandGen_t& rndgen)
 	{
 		if (state::Verbosity > 2)
 		{
-			printf("Creating greedy prefix. Initial prefix size = %llu, max prefix size %u.\n", prefix.size(), maxpairs);
+			std::cout << "Creating greedy prefix. Initial prefix size = " << prefix.size() << ", max prefix size "<< maxpairs << std::endl;
 		}
 		auto cg = ClusterGroup<N>();
 		initAlphabet<N>(use_symmetry);
@@ -253,14 +253,14 @@ namespace sh {
 				// Found no improvement
 				if (state::Verbosity > 2)
 				{
-					printf("Greedy algorithm: no further improvement.\n");
+					std::cout << "Greedy algorithm: no further improvement." << std::endl;
 				}
 				break;
 			}
 			cg = cgbest;
 			if (state::Verbosity > 2)
 			{
-				printf("Greedy: adding pair (%u,%u)\n", best.lo, best.hi);
+				std::cout << "Greedy: adding pair (" << best.lo << "," << best.hi << ")" << std::endl;
 			}
 			prefix.push_back(best);
 			if (use_symmetry && ((best.lo + best.hi) != (N - 1)))
@@ -268,7 +268,7 @@ namespace sh {
 				Pair_t p = Pair_t(N - 1 - best.hi, N - 1 - best.lo);
 				if (state::Verbosity > 2)
 				{
-					printf("Greedy: adding symmetric pair (%u,%u)\n", p.lo, p.hi);
+					std::cout << "Greedy: adding symmetric pair (" << p.lo << "," << p.hi << ")" << std::endl;
 				}
 				prefix.push_back(std::move(p));
 			}
