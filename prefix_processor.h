@@ -260,15 +260,15 @@ namespace sh {
 			cg = cgbest;
 			if (state::Verbosity > 2)
 			{
-				std::cout << "Greedy: adding pair (" << best.lo << "," << best.hi << ")" << std::endl;
+				std::cout << "Greedy: adding pair (" << static_cast<int>(best.lo) << "," << static_cast<int>(best.hi) << ")" << std::endl;
 			}
 			prefix.push_back(best);
 			if (use_symmetry && ((best.lo + best.hi) != (N - 1)))
 			{
-				Pair_t p = Pair_t(N - 1 - best.hi, N - 1 - best.lo);
+				const Pair_t p = Pair_t(N - 1 - best.hi, N - 1 - best.lo);
 				if (state::Verbosity > 2)
 				{
-					std::cout << "Greedy: adding symmetric pair (" << p.lo << "," << p.hi << ")" << std::endl;
+					std::cout << "Greedy: adding symmetric pair (" << static_cast<int>(p.lo) << "," << static_cast<int>(p.hi) << ")" << std::endl;
 				}
 				prefix.push_back(std::move(p));
 			}
