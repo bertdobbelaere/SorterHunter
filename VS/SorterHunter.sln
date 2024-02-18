@@ -6,6 +6,7 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D1180D6D-BE68-4491-A168-73DA364DBFB0}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
+		..\latex\sn.tex = ..\latex\sn.tex
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SorterHunter.Lib", "SorterHunter.Lib\SorterHunter.Lib.vcxproj", "{2D551AD4-DAC3-4B16-A6A5-822DC545CA22}"

@@ -42,7 +42,7 @@
 #include <ctime>
 #include <array>
 #include <chrono>
-
+#include <unordered_set>
 
 #include "htypes.h"
 #include "hutils.h"
@@ -51,6 +51,9 @@
 #include "linear_to_layers.h"
 #include "State.h"
 
+#include "sn_to_latex.h"
+#include "swap_data.h"
+#include "ktop.h"
 
 namespace sh {
 
@@ -270,7 +273,6 @@ namespace sh {
 		return true;
 	}
 
-
 	/**
 	 * Filter a network to obtain only the pairs that are in range 0..ninputs-1 and properly sorted
 	 * @param nw input network
@@ -304,7 +306,7 @@ namespace sh {
 		const SortWord_t sizetmp = createGreedyPrefix<N>(npairs, state::use_symmetry, prefix, state::mtRand);
 		if (state::Verbosity > 1)
 		{
-			//std::cout << "Greedy prefix size " << prefix.size() << ", span " << sizetmp << std::endl;
+			std::cout << "Greedy prefix size " << prefix.size() << ", span " << sizetmp << std::endl;
 		}
 	}
 
@@ -320,7 +322,7 @@ namespace sh {
 		const SortWord_t sizetmp = createGreedyPrefix<N>(npairs + static_cast<int>(prefix.size()), state::use_symmetry, prefix, state::mtRand);
 		if (state::Verbosity > 2)
 		{
-			//std::cout << "Hybrid prefix size " << prefix.size() << ", span " << sizetmp << std::endl;
+			std::cout << "Hybrid prefix size " << prefix.size() << ", span " << sizetmp << std::endl;
 		}
 	}
 
@@ -491,11 +493,11 @@ namespace sh {
 
 				if (print_layers) {					
 					constexpr bool remove_prefix = false;
-					constexpr bool remove_postfix = true;
+					constexpr bool remove_postfix = false;
 
 					if (remove_prefix) {
-						std::cout << "prefix:" << std::endl << tools::layers_to_string_mojo(tools::linear_to_layers(prefix)) << std::endl;
-						std::cout << "layers:" << std::endl << tools::layers_to_string_mojo(tools::linear_to_layers(nw)) << std::endl;
+						//std::cout << "prefix:" << std::endl << tools::layers_to_string_mojo(tools::linear_to_layers(prefix)) << std::endl;
+						//std::cout << "layers:" << std::endl << tools::layers_to_string_mojo(tools::linear_to_layers(nw)) << std::endl;
 						const auto layers = tools::linear_to_layers(tools::remove_prefix(nw, prefix));
 						std::cout << "removed prefix: layers:" << std::endl << tools::layers_to_string_mojo(layers) << std::endl;
 					}
@@ -506,7 +508,9 @@ namespace sh {
 						std::cout << "removed postfix: layers:" << std::endl << tools::layers_to_string_mojo(layers) << std::endl;
 					}
 					else {
-						std::cout << "layers:" << std::endl << tools::layers_to_string_mojo(tools::linear_to_layers(nw)) << std::endl;
+						const auto layers = tools::linear_to_layers(nw);
+						sh::tools::write_latex(layers, N, "solution.tex");
+						std::cout << "layers:" << std::endl << tools::layers_to_string_mojo(layers) << std::endl;
 					}
 				}
 				else { // print linear list of ce's
@@ -628,7 +632,7 @@ namespace sh {
 				}
 				else // In case of postfix: just append a random initial pair to the core network, cannot directly determine good candidate from failed output pattern.
 				{
-					std::cout << "Postfix is not empty" << std::endl;
+					//std::cout << "Postfix is not empty" << std::endl;
 					p = RANDELEM(state::alphabet);
 				}
 
@@ -647,7 +651,7 @@ namespace sh {
 
 			for (;;) // Program never ends, keep trying to improve, we may restart in the outer loop however.
 			{
-				std::cout << "X";
+				//std::cout << "X";
 
 				if (state::Verbosity > 2)
 				{
@@ -686,7 +690,7 @@ namespace sh {
 				while (mod_count < nmods)
 				{
 					const int r = attemptMutation(state::newpairs);
-					std::cout << "r = " << r << "; mod_count = " << mod_count << "; nmods = " << nmods << std::endl;
+					//std::cout << "r = " << r << "; mod_count = " << mod_count << "; nmods = " << nmods << std::endl;
 					if (r != 0)
 					{
 						//std::cout << "Inc mod_count" << std::endl;
@@ -694,7 +698,7 @@ namespace sh {
 					}
 				}
 
-				std::cout << "Y";
+				//std::cout << "Y";
 
 				/* Create a symmetric expansion of the modified pairs (or just a copy if non-symmetric network) */
 				if (state::use_symmetry)
@@ -706,7 +710,7 @@ namespace sh {
 					state::se = state::newpairs;
 				}
 
-				std::cout << "Z";
+				//std::cout << "Z";
 
 
 				appendNetwork(state::se, state::postfix);
@@ -788,6 +792,51 @@ using namespace sh;
 
 int main(int argc, char* argv[])
 {
+	if (true) {
+		const int k = 8;
+		const int channels = 32;
+
+		const auto& swap_network = get_sort_network(channels);
+		const std::string latex_name1 = "sn_" + std::to_string(channels) + ".tex";
+		sh::tools::write_latex(swap_network, channels, latex_name1);
+		
+		const auto unrelated_groups = sh::tools::get_unrelated_groups(k, channels);
+		const auto swap_network2 = sh::tools::annotate_unnecessary(unrelated_groups, sh::tools::convert_to_ece(swap_network));
+		const std::string latex_name2 = "sn_" + std::to_string(k) + "top" + std::to_string(channels) + ".tex";
+		sh::tools::write_latex(swap_network2, channels, latex_name2);
+
+		const auto linear = sh::tools::layers_to_linear_only_colour(swap_network2, "black");
+		const auto swap_network3 = sh::tools::linear_to_layers(linear);
+		const std::string latex_name3 = "sn_" + std::to_string(k) + "top" + std::to_string(channels) + "X.tex";
+		sh::tools::write_latex(swap_network3, channels, latex_name3);
+
+		std::cout << sh::tools::linear_to_string(linear);
+
+		return 0;
+	}
+
+	if (false) {
+		const int channels = 64;
+
+		const auto& swap_network = get_sort_network(channels);
+		const std::string latex_name1 = "sn_" + std::to_string(channels) + ".tex";
+		sh::tools::write_latex(swap_network, channels, latex_name1);
+
+		for (int k = 1; k < channels; ++k) 
+		{
+			const auto unrelated_groups = sh::tools::get_unrelated_groups(k, channels);
+			const auto swap_network2 = sh::tools::annotate_unnecessary(unrelated_groups, sh::tools::convert_to_ece(swap_network));
+			const std::string latex_name2 = "sn_" + std::to_string(k) + "top" + std::to_string(channels) + ".tex";
+			sh::tools::write_latex(swap_network2, channels, latex_name2);
+
+			const auto linear = sh::tools::layers_to_linear_only_colour(swap_network2, "black");
+			const auto swap_network3 = sh::tools::linear_to_layers(linear);
+			const std::string latex_name3 = "sn_" + std::to_string(k) + "top" + std::to_string(channels) + "X.tex";
+			sh::tools::write_latex(swap_network3, channels, latex_name3);
+		}
+		return 0;
+	}
+
 	// Handle validity of command line options - extremely simple
 	if (argc != 2)
 	{

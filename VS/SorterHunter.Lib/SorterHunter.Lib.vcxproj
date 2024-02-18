@@ -59,6 +59,7 @@
     <ClInclude Include="..\..\ConfigParser.h" />
     <ClInclude Include="..\..\htypes.h" />
     <ClInclude Include="..\..\hutils.h" />
+    <ClInclude Include="..\..\ktop.h" />
     <ClInclude Include="..\..\linear_to_layers.h" />
     <ClInclude Include="..\..\prefix_processor.h" />
     <ClInclude Include="..\..\slimcpplib\long_fixdiv.h" />
@@ -69,7 +70,9 @@
     <ClInclude Include="..\..\slimcpplib\long_math_long.h" />
     <ClInclude Include="..\..\slimcpplib\long_math_msvc.h" />
     <ClInclude Include="..\..\slimcpplib\long_uint.h" />
+    <ClInclude Include="..\..\sn_to_latex.h" />
     <ClInclude Include="..\..\State.h" />
+    <ClInclude Include="..\..\swap_data.h" />
     <ClInclude Include="..\..\swap_sorted_patterns.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -35,6 +35,8 @@
 #include <sstream>
 
 #include "htypes.h"
+#include "ktop.h"
+
 
 namespace sh::tools {
 
@@ -73,13 +75,15 @@ namespace sh::tools {
     }
 
     // Converts a linear network representation as pairs into a layer representation.
-    [[nodiscard]] inline std::vector<std::vector<std::pair<int, int>>> linear_to_layers(const std::vector<std::pair<int, int>>& input_lst)
+    [[nodiscard]] inline std::vector<std::vector<Ece>> linear_to_layers(const std::vector<Ece>& input_lst)
     {
-        std::vector<std::vector<std::pair<int, int>>> result;
+        std::vector<std::vector<Ece>> result;
         std::unordered_map<int, int> lbl_state;
 
-        for (const auto& [i, j] : input_lst)
+        for (const Ece& swap : input_lst)
         {
+            const auto& [i, j, colour] = swap;
+
             if (!lbl_state.contains(i)) {
                 lbl_state[i] = 0;
             }
@@ -91,29 +95,64 @@ namespace sh::tools {
             const int k = std::max(lbl_state[i], lbl_state[j]);
 
             if (k >= result.size()) {
-                result.push_back(std::vector<std::pair<int, int>>());
+                result.push_back(std::vector<Ece>());
             }
-            result[k].push_back(std::make_pair(i, j));
+            result[k].push_back(swap);
             lbl_state[i] = lbl_state[j] = k + 1;
         }
 
-        for (auto& layer : result) {
-            sort(layer.begin(), layer.end());
+        for (std::vector<Ece>& layer : result) {
+            sort(layer.begin(), layer.end(), [](const Ece& a, const Ece& b)
+                {
+                    return (a.first == b.first) ? a.first < b.first : a.first < b.first;
+                });
         }
-
         return result;
     }
 
     // Converts a linear network representation as pairs into a layer representation.
-    [[nodiscard]] inline std::vector<std::vector<std::pair<int, int>>> linear_to_layers(const std::vector<Pair_t>& input_lst) {
-        std::vector<std::pair<int, int>> tmp;
+    [[nodiscard]] inline std::vector<std::vector<Ece>> linear_to_layers(const std::vector<Pair_t>& input_lst) {
+        std::vector<Ece> tmp;
         for (const Pair_t& p : input_lst) {
-            tmp.push_back(std::make_pair(p.lo, p.hi));
+            Ece swap;
+            swap.first = p.lo;
+            swap.second = p.hi;
+            swap.colour = "black";
+            tmp.push_back(std::move(swap));
         }
         return linear_to_layers(tmp);
     }
 
-    [[nodiscard]] inline std::string layers_to_string(const std::vector<std::vector<std::pair<int, int>>>& layers)
+    [[nodiscard]] inline std::vector<std::vector<Ece>> linear_to_layers(const std::vector<std::pair<int, int>>& input_lst) {
+        std::vector<Ece> tmp;
+        for (const std::pair<int, int>& swap : input_lst) {
+            Ece swap;
+            swap.first = swap.first;
+            swap.second = swap.second;
+            swap.colour = "black";
+            tmp.push_back(std::move(swap));
+        }
+        return linear_to_layers(tmp);
+    }
+
+
+    [[nodiscard]] inline std::vector<Ece> layers_to_linear_only_colour(
+        const std::vector<std::vector<Ece>>& layers,
+        const std::string& colour = "black"
+    ) {
+        std::vector<Ece>  result;
+        for (const std::vector<Ece>& layer : layers)
+        {
+            for (const Ece& swap : layer) {
+                if (swap.colour == colour) {
+                    result.push_back(swap);
+                }
+            }
+        }
+        return result;
+    }
+
+    [[nodiscard]] inline std::string layers_to_string(const std::vector<std::vector<Ece>>& layers)
     {
         std::stringstream ss;
         for (const auto& layer : layers) 
@@ -132,7 +171,7 @@ namespace sh::tools {
         return ss.str();
     }
 
-    [[nodiscard]] inline std::string layers_to_string_mojo(const std::vector<std::vector<std::pair<int, int>>>& layers)
+    [[nodiscard]] inline std::string layers_to_string_mojo(const std::vector<std::vector<Ece>>& layers)
     {
         std::stringstream ss;
         int layer_id = 0;
@@ -153,10 +192,23 @@ namespace sh::tools {
         return ss.str();
     }
 
+    [[nodiscard]] inline std::string linear_to_string(const std::vector<Ece>& linear) {
+        std::stringstream ss;
+        const int size = static_cast<int>(linear.size());
+        for (int i = 0; i < size; ++i) {
+            const Ece& swap = linear[i];
+            ss << "(" << swap.first << "," << swap.second << ")";
+            if (i < size - 1) {
+                ss << ",";
+            }
+        }
+        return ss.str();
+    }
+
     inline void test_linear_to_layers()
     {
         const std::vector<std::pair<int, int>> input = { {2, 4}, {7, 9}, {0, 8}, {3, 11}, {0, 7}, {4, 11}, {1, 6}, {5, 10}, {2, 5}, {6, 9}, {1, 3}, {8, 10}, {0, 2}, {9, 11}, {4, 6}, {5, 7}, {2, 5}, {6, 9}, {0, 1}, {10, 11}, {3, 7}, {4, 8}, {2, 3}, {8, 9}, {1, 4}, {7, 10}, {4, 5}, {6, 7}, {1, 2}, {9, 10}, {3, 5}, {6, 8}, {2, 4}, {7, 9}, {3, 6}, {5, 8}, {3, 4}, {7, 8}, {5, 6} };
-        const std::vector<std::vector<std::pair<int, int>>> layers = linear_to_layers(input);
+        const std::vector<std::vector<Ece>> layers = linear_to_layers(input);
         std::cout << layers_to_string(layers);
 
         // Expected the result

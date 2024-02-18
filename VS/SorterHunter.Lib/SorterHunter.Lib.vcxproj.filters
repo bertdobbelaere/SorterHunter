@@ -80,5 +80,14 @@
     <ClInclude Include="..\..\slimcpplib\long_uint.h">
       <Filter>Header Files\slimccplib</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\sn_to_latex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ktop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\swap_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -63,14 +63,13 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\..\sample_config.txt" />
     <Text Include="..\..\sample_config_128.txt" />
     <Text Include="..\..\sample_config_16x16.txt" />
     <Text Include="..\..\sample_config_32x32.txt" />
+    <Text Include="..\..\sample_config_4top8.txt" />
     <Text Include="..\..\sample_config_4x4.txt" />
     <Text Include="..\..\sample_config_8top64.txt" />
     <Text Include="..\..\sample_config_8x8.txt" />
-    <Text Include="..\..\sample_config_k4top8.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
