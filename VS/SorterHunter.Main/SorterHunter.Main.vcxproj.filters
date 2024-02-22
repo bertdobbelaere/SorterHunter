@@ -41,5 +41,8 @@
     <Text Include="..\..\sample_config_4top8.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="..\..\sample_config_8top32.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

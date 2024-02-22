@@ -260,7 +260,7 @@ namespace sh {
 			cg = cgbest;
 			if (state::Verbosity > 2)
 			{
-				std::cout << "Greedy: adding pair (" << static_cast<int>(best.lo) << "," << static_cast<int>(best.hi) << ")" << std::endl;
+				std::cout << "Greedy: adding pair (" << static_cast<int>(best.lo) << "," << static_cast<int>(best.hi) << "); prefix_size = " << prefix.size() << std::endl;
 			}
 			prefix.push_back(best);
 			if (use_symmetry && ((best.lo + best.hi) != (N - 1)))

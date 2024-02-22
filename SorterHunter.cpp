@@ -493,7 +493,7 @@ namespace sh {
 
 				if (print_layers) {					
 					constexpr bool remove_prefix = false;
-					constexpr bool remove_postfix = false;
+					constexpr bool remove_postfix = true;
 
 					if (remove_prefix) {
 						//std::cout << "prefix:" << std::endl << tools::layers_to_string_mojo(tools::linear_to_layers(prefix)) << std::endl;
@@ -502,10 +502,15 @@ namespace sh {
 						std::cout << "removed prefix: layers:" << std::endl << tools::layers_to_string_mojo(layers) << std::endl;
 					}
 					else if (remove_postfix) {
-						//std::cout << "postfix:" << std::endl << tools::layers_to_string_mojo(tools::linear_to_layers(postfix)) << std::endl;
-						//std::cout << "layers:" << std::endl << tools::layers_to_string_mojo(tools::linear_to_layers(nw)) << std::endl;
-						const auto layers = tools::linear_to_layers(tools::remove_postfix(nw, postfix));
-						std::cout << "removed postfix: layers:" << std::endl << tools::layers_to_string_mojo(layers) << std::endl;
+
+						const auto postfix_layers = tools::linear_to_layers(postfix);
+						sh::tools::write_latex(postfix_layers, N, "solution_postfix.tex");
+						const auto solution_full = tools::linear_to_layers(nw);
+						sh::tools::write_latex(solution_full, N, "solution_full.tex");
+						const auto solution = tools::linear_to_layers(tools::remove_postfix(nw, postfix));
+						sh::tools::write_latex(solution, N, "solution.tex");
+
+						std::cout << "removed postfix: solution:" << std::endl << tools::layers_to_string_mojo(solution) << std::endl;
 					}
 					else {
 						const auto layers = tools::linear_to_layers(nw);
@@ -792,7 +797,7 @@ using namespace sh;
 
 int main(int argc, char* argv[])
 {
-	if (true) {
+	if (false) {
 		const int k = 8;
 		const int channels = 32;
 

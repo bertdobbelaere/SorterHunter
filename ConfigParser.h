@@ -27,13 +27,18 @@
  */
 
 #pragma once
-#include "htypes.h"
 #include <string>
 #include <map>
 #include <cstdio>
 #include <iostream>
 #include <fstream>
 #include <cctype>
+
+#include "htypes.h"
+#include "swap_data.h"
+#include "ktop.h"
+#include "sn_to_latex.h"
+#include "linear_to_layers.h"
 
 namespace sh {
 
@@ -81,7 +86,39 @@ namespace sh {
 	}
 
 
+	namespace {
 
+		[[nodiscard]] Network_t ktop_sn(const int k, const int channels) {
+			Network_t network;
+			const auto& swap_network = get_sort_network(channels);
+			const auto unrelated_groups = sh::tools::get_unrelated_groups(k, channels);
+			const auto swap_network2 = sh::tools::annotate_unnecessary(unrelated_groups, sh::tools::convert_to_ece(swap_network));
+			const auto linear = sh::tools::layers_to_linear_only_colour(swap_network2, "black");
+
+			for (const sh::tools::Ece& swap : linear) {
+				network.push_back(Pair_t(swap.first, swap.second));
+			}
+			return network;
+		}
+
+		[[nodiscard]] Network_t merge_sn(const int channels1, const int channels2) {
+			const auto& sn1 = get_sort_network(channels1);
+			const auto& sn2 = get_sort_network(channels2);
+
+			Network_t network;
+			for (const auto& layer : sn1) {
+				for (const auto& swap : layer) {
+					network.push_back(Pair_t(swap.first, swap.second));
+				}
+			}
+			for (const auto& layer : sn2) {
+				for (const auto& swap : layer) {
+					network.push_back(Pair_t(swap.first + channels1, swap.second + channels1));
+				}
+			}
+			return network;
+		}
+	}
 
 	/**
 	 * Config parser internal kitchen class
@@ -106,6 +143,24 @@ namespace sh {
 		{
 			if ((key == "FixedPrefix") || (key == "InitialNetwork") || (key == "Postfix"))
 			{
+				if (value == "Sn8top32UpperBound") {
+					networkmap.insert(std::pair<std::string, Network_t>(key, ktop_sn(8, 32)));
+					return true;
+				}
+				if (value == "Sn8top64UpperBound") {
+					networkmap.insert(std::pair<std::string, Network_t>(key, ktop_sn(8, 64)));
+					return true;
+				}
+
+				else if (value == "Sn8AndSn24") {
+					networkmap.insert(std::pair<std::string, Network_t>(key, merge_sn(8, 24)));
+					return true;
+				}
+				else if (value == "Sn8AndSn56") {
+					networkmap.insert(std::pair<std::string, Network_t>(key, merge_sn(8, 56)));
+					return true;
+				}
+
 				/* For these two keys, delegate further processing to network value handler */
 				return addKeyNetworkValue(key, value, linenr);
 			}
