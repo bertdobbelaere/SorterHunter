@@ -45,8 +45,8 @@ namespace sh {
 		template <> struct TypeChooser<256> { using Type = slim::uint256_t; };
 	}
 
-	constexpr int NMAX = 64;
-	constexpr int PARWORDSIZE = 64;
+	constexpr int NMAX = 128;
+	constexpr int PARWORDSIZE = 128;
 	using SortWord_t = TypeChooser<NMAX>::Type;
 	using BPWord_t = TypeChooser<PARWORDSIZE>::Type;
 

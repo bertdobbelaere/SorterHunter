@@ -118,6 +118,17 @@ namespace sh {
 			}
 			return network;
 		}
+
+		[[nodiscard]] Network_t sn(const int channels) {
+			const auto& swap_network = get_sort_network(channels);
+			Network_t network;
+			for (const auto& layer : swap_network) {
+				for (const auto& swap : layer) {
+					network.push_back(Pair_t(swap.first, swap.second));
+				}
+			}
+			return network;
+		}
 	}
 
 	/**
@@ -143,15 +154,18 @@ namespace sh {
 		{
 			if ((key == "FixedPrefix") || (key == "InitialNetwork") || (key == "Postfix"))
 			{
-				if (value == "Sn8top32UpperBound") {
+				if (value == "sn128") {
+					networkmap.insert(std::pair<std::string, Network_t>(key, sn(128)));
+					return true;
+				}
+				else if (value == "Sn8top32UpperBound") {
 					networkmap.insert(std::pair<std::string, Network_t>(key, ktop_sn(8, 32)));
 					return true;
 				}
-				if (value == "Sn8top64UpperBound") {
+				else if (value == "Sn8top64UpperBound") {
 					networkmap.insert(std::pair<std::string, Network_t>(key, ktop_sn(8, 64)));
 					return true;
 				}
-
 				else if (value == "Sn8AndSn24") {
 					networkmap.insert(std::pair<std::string, Network_t>(key, merge_sn(8, 24)));
 					return true;

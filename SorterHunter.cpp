@@ -306,7 +306,7 @@ namespace sh {
 		const SortWord_t sizetmp = createGreedyPrefix<N>(npairs, state::use_symmetry, prefix, state::mtRand);
 		if (state::Verbosity > 1)
 		{
-			std::cout << "Greedy prefix size " << prefix.size() << ", span " << sizetmp << std::endl;
+			//std::cout << "Greedy prefix size " << prefix.size() << ", span " << sizetmp << std::endl;
 		}
 	}
 
@@ -322,7 +322,7 @@ namespace sh {
 		const SortWord_t sizetmp = createGreedyPrefix<N>(npairs + static_cast<int>(prefix.size()), state::use_symmetry, prefix, state::mtRand);
 		if (state::Verbosity > 2)
 		{
-			std::cout << "Hybrid prefix size " << prefix.size() << ", span " << sizetmp << std::endl;
+			//std::cout << "Hybrid prefix size " << prefix.size() << ", span " << sizetmp << std::endl;
 		}
 	}
 
