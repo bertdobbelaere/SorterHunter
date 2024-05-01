@@ -1,0 +1,11 @@
+{
+  "N": 2,
+  "L": 1,
+  "D": 1,
+  "MAXSWAPS": 1,
+  "AVGSWAPS": 0.5,
+  "symmetric": true,
+  "nw": [
+    [0,1]
+  ]
+}
