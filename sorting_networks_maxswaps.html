@@ -1,0 +1,361 @@
+<!DOCTYPE html><html lang="en">
+
+	<head>
+<meta charset="utf-8"/>
+<title>Sorting networks optimized for worst case swap count</title>
+<meta name = "keywords" content = "Sorting networks, list, worst case swaps" />
+<meta name = "description" content = "Sorting networks optimized for worst case swap count" />
+<meta name = "author" content = "Bert Dobbelaere" />
+<link rel="icon" href="sorticon32.png" sizes="32x32">
+<style>
+body {
+    background-color: linen;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+
+th {
+    background-color: rgb(120,150,255);
+    padding: 10px 20px 10px 20px;
+}
+
+td {
+    padding: 20px 20px 20px 20px;
+}
+
+td.idx {
+    padding: 2px 20px 2px 20px;
+}
+
+
+h2 {
+    padding: 50px 50px 30px 50px;
+}
+
+p.mono {
+	font-family: "Lucida Console", monospace;
+    font-size: 80%;
+    color: rgb(0,80,150);
+}
+
+</style>
+</head><body>
+<h2>Sorting networks optimized for worst case swap count</h2>
+<p>The sorting networks on this page have been optimized to reduce the <b>worst case</b> number of swaps executed for any input permutation.</p>
+<p>For some applications (e.g. real-time computing), understanding of this worst case behaviour is important.<br>The network will still perform all comparisons, we just try to limit the number of elements that actually change the order.<br>
+The size and depth of the networks matches the smallest size networks from the regular <a href="sorting_networks_extended.html">list of sorting networks</a>.<br>
+Whether the reduction of swaps actually reduces the resource consumption will depend on the target architecture.</p><p>You may notice this list is shorter than the others on this site. This is because of the amount of computation involved to verify the worst case swap count.<br>
+The networks were obtained by applying input order transformations on the outputs from <a href="https://github.com/bertdobbelaere/SorterHunter">SorterHunter</a>, trying to improve the swap count.</p>
+<p>For questions, remarks, or to contribute improved results please contact bert.o.dobbelaere[at]telenet[dot]be.</p><p>For optimization of the <b>average</b> number of swaps, see <a href=sorting_networks_avgswaps.html>this page</a>.</p><h3>Summary table</h3>
+<table><tr><th>Number of inputs</th><th>Size</th><th>Depth</th><th>Max swap count</th><th>Average swap count</th><th>Comments</th></tr>
+<tr><td class="idx">2</td><td class="idx">1</td><td class="idx">1</td><td class="idx"><a href="#N2L1D1WCS1"><b>1</b> worst case</a></td><td class="idx">0.5</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">3</td><td class="idx">3</td><td class="idx">3</td><td class="idx"><a href="#N3L3D3WCS2"><b>2</b> worst case</a></td><td class="idx">1.16666667</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">4</td><td class="idx">5</td><td class="idx">3</td><td class="idx"><a href="#N4L5D3WCS4"><b>4</b> worst case</a></td><td class="idx">2.33333333</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">5</td><td class="idx">9</td><td class="idx">5</td><td class="idx"><a href="#N5L9D5WCS6"><b>6</b> worst case</a></td><td class="idx">3.13333333</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">6</td><td class="idx">12</td><td class="idx">5</td><td class="idx"><a href="#N6L12D5WCS8"><b>8</b> worst case</a></td><td class="idx">4.7</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">7</td><td class="idx">16</td><td class="idx">6</td><td class="idx"><a href="#N7L16D6WCS11"><b>11</b> worst case</a></td><td class="idx">5.89047619</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">8</td><td class="idx">19</td><td class="idx">6</td><td class="idx"><a href="#N8L19D6WCS14"><b>14</b> worst case</a></td><td class="idx">7.94285714</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">9</td><td class="idx">25</td><td class="idx">7</td><td class="idx"><a href="#N9L25D7WCS17"><b>17</b> worst case</a></td><td class="idx">9.02539683</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">10</td><td class="idx">29</td><td class="idx">8</td><td class="idx"><a href="#N10L29D8WCS21"><b>21</b> worst case</a></td><td class="idx">10.77619048</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">11</td><td class="idx">35</td><td class="idx">8</td><td class="idx"><a href="#N11L35D8WCS24"><b>24</b> worst case</a></td><td class="idx">12.92481962</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">12</td><td class="idx">39</td><td class="idx">9</td><td class="idx"><a href="#N12L39D9WCS27"><b>27</b> worst case</a></td><td class="idx">14.60606061</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">13</td><td class="idx">45</td><td class="idx">10</td><td class="idx"><a href="#N13L45D10WCS32"><b>32</b> worst case</a></td><td class="idx">17.23369963</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">14</td><td class="idx">51</td><td class="idx">10</td><td class="idx"><a href="#N14L51D10WCS37"><b>37</b> worst case</a></td><td class="idx">18.55663226</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">15</td><td class="idx">56</td><td class="idx">10</td><td class="idx"><a href="#N15L56D10WCS42"><b>42</b> worst case</a></td><td class="idx">21.37505828</td><td class="idx">&nbsp;</td></tr>
+<tr><td class="idx">16</td><td class="idx">60</td><td class="idx">10</td><td class="idx"><a href="#N16L60D10WCS46"><b>46</b> worst case</a></td><td class="idx">24.27781108</td><td class="idx">&nbsp;</td></tr>
+</table>
+<h3>Individual networks:</h3>
+<table id=Networks>
+<tr id="N2L1D1WCS1"><td>Sorting network for 2 inputs, 1 CE, 1 layer.<br>Worst case 1 swaps, 0.5 swaps on average.<br>
+<p class="mono">[(0,1)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N3L3D3WCS2"><td>Sorting network for 3 inputs, 3 CEs, 3 layers.<br>Worst case 2 swaps, 1.16666667 swaps on average.<br>
+<p class="mono">[(0,2)]<br>
+[(0,1)]<br>
+[(1,2)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N4L5D3WCS4"><td>Sorting network for 4 inputs, 5 CEs, 3 layers.<br>Worst case 4 swaps, 2.33333333 swaps on average.<br>
+<p class="mono">[(0,3),(1,2)]<br>
+[(0,1),(2,3)]<br>
+[(1,2)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N5L9D5WCS6"><td>Sorting network for 5 inputs, 9 CEs, 5 layers.<br>Worst case 6 swaps, 3.13333333 swaps on average.<br>
+<p class="mono">[(0,4)]<br>
+[(0,2),(1,4)]<br>
+[(1,3),(2,4)]<br>
+[(0,1),(2,3)]<br>
+[(1,2),(3,4)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N6L12D5WCS8"><td>Sorting network for 6 inputs, 12 CEs, 5 layers.<br>Worst case 8 swaps, 4.7 swaps on average.<br>
+<p class="mono">[(0,5),(1,3),(2,4)]<br>
+[(0,2),(1,4),(3,5)]<br>
+[(0,1),(2,3),(4,5)]<br>
+[(1,2),(3,4)]<br>
+[(2,3)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N7L16D6WCS11"><td>Sorting network for 7 inputs, 16 CEs, 6 layers.<br>Worst case 11 swaps, 5.89047619 swaps on average.<br>
+<p class="mono">[(0,6),(1,5),(2,3)]<br>
+[(0,2),(1,4),(3,6)]<br>
+[(0,1),(3,5),(4,6)]<br>
+[(1,3),(2,4),(5,6)]<br>
+[(2,3),(4,5)]<br>
+[(1,2),(3,4)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N8L19D6WCS14"><td>Sorting network for 8 inputs, 19 CEs, 6 layers.<br>Worst case 14 swaps, 7.94285714 swaps on average.<br>
+<p class="mono">[(0,7),(1,6),(2,5),(3,4)]<br>
+[(0,2),(1,3),(4,6),(5,7)]<br>
+[(0,1),(2,4),(3,5),(6,7)]<br>
+[(1,3),(4,6)]<br>
+[(2,3),(4,5)]<br>
+[(1,2),(3,4),(5,6)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N9L25D7WCS17"><td>Sorting network for 9 inputs, 25 CEs, 7 layers.<br>Worst case 17 swaps, 9.02539683 swaps on average.<br>
+<p class="mono">[(0,8),(1,6),(2,5),(4,7)]<br>
+[(0,4),(2,6),(3,7),(5,8)]<br>
+[(0,2),(1,5),(3,4),(6,8)]<br>
+[(1,3),(4,6),(5,7)]<br>
+[(0,1),(2,4),(3,5),(7,8)]<br>
+[(2,3),(4,5),(6,7)]<br>
+[(1,2),(3,4),(5,6)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N10L29D8WCS21"><td>Sorting network for 10 inputs, 29 CEs, 8 layers.<br>Worst case 21 swaps, 10.77619048 swaps on average.<br>
+<p class="mono">[(0,7),(1,6),(2,9),(3,8),(4,5)]<br>
+[(0,3),(1,4),(5,8),(6,9)]<br>
+[(0,2),(3,6),(7,9)]<br>
+[(0,1),(2,4),(5,7),(8,9)]<br>
+[(1,3),(2,5),(4,7),(6,8)]<br>
+[(1,2),(3,5),(4,6),(7,8)]<br>
+[(2,3),(4,5),(6,7)]<br>
+[(3,4),(5,6)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N11L35D8WCS24"><td>Sorting network for 11 inputs, 35 CEs, 8 layers.<br>Worst case 24 swaps, 12.92481962 swaps on average.<br>
+<p class="mono">[(0,10),(1,8),(2,9),(3,5),(6,7)]<br>
+[(0,6),(1,3),(4,9),(5,7),(8,10)]<br>
+[(0,1),(2,4),(3,6),(5,8),(7,10)]<br>
+[(2,5),(3,9),(4,8)]<br>
+[(0,2),(1,4),(3,5),(6,8),(7,9)]<br>
+[(1,3),(4,6),(5,7),(9,10)]<br>
+[(2,3),(4,5),(6,7),(8,9)]<br>
+[(1,2),(3,4),(5,6),(7,8)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N12L39D9WCS27"><td>Sorting network for 12 inputs, 39 CEs, 9 layers.<br>Worst case 27 swaps, 14.60606061 swaps on average.<br>
+<p class="mono">[(0,11),(1,10),(2,9),(3,8),(4,7),(5,6)]<br>
+[(0,5),(1,3),(6,11),(8,10)]<br>
+[(0,2),(3,7),(4,8),(9,11)]<br>
+[(1,4),(2,5),(6,9),(7,10)]<br>
+[(0,1),(2,4),(3,6),(5,8),(7,9),(10,11)]<br>
+[(1,3),(4,7),(5,6),(8,10)]<br>
+[(1,2),(3,5),(6,8),(9,10)]<br>
+[(2,3),(4,5),(6,7),(8,9)]<br>
+[(3,4),(5,6),(7,8)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N13L45D10WCS32"><td>Sorting network for 13 inputs, 45 CEs, 10 layers.<br>Worst case 32 swaps, 17.23369963 swaps on average.<br>
+<p class="mono">[(0,11),(1,12),(2,10),(3,9),(4,6),(5,8)]<br>
+[(0,3),(1,5),(2,4),(6,10),(8,12),(9,11)]<br>
+[(0,2),(3,8),(5,9),(7,11),(10,12)]<br>
+[(4,9),(6,8),(7,10),(11,12)]<br>
+[(1,7),(3,4),(5,6),(8,10),(9,11)]<br>
+[(0,1),(2,7),(3,5),(8,9),(10,11)]<br>
+[(1,2),(4,7),(6,8),(9,10)]<br>
+[(1,3),(2,5),(4,6),(7,8)]<br>
+[(2,3),(4,5),(6,7),(8,9)]<br>
+[(3,4),(5,6)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N14L51D10WCS37"><td>Sorting network for 14 inputs, 51 CEs, 10 layers.<br>Worst case 37 swaps, 18.55663226 swaps on average.<br>
+<p class="mono">[(0,13),(1,12),(2,11),(3,10),(4,9),(5,8),(6,7)]<br>
+[(0,4),(1,5),(3,6),(7,10),(8,12),(9,13)]<br>
+[(0,3),(2,9),(4,11),(10,13)]<br>
+[(1,2),(3,5),(4,7),(6,9),(8,10),(11,12)]<br>
+[(0,1),(2,6),(4,8),(5,9),(7,11),(12,13)]<br>
+[(1,3),(2,4),(5,8),(9,11),(10,12)]<br>
+[(1,2),(3,4),(5,7),(6,8),(9,10),(11,12)]<br>
+[(2,3),(4,6),(7,9),(10,11)]<br>
+[(4,5),(6,7),(8,9)]<br>
+[(3,4),(5,6),(7,8),(9,10)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N15L56D10WCS42"><td>Sorting network for 15 inputs, 56 CEs, 10 layers.<br>Worst case 42 swaps, 21.37505828 swaps on average.<br>
+<p class="mono">[(0,12),(1,9),(2,10),(4,11),(5,14),(6,13),(7,8)]<br>
+[(0,4),(2,6),(3,9),(5,7),(8,14),(10,13),(11,12)]<br>
+[(0,5),(1,8),(3,7),(4,10),(6,11),(9,13),(12,14)]<br>
+[(0,2),(1,4),(3,6),(7,11),(8,10),(9,12),(13,14)]<br>
+[(1,3),(2,5),(4,7),(6,8),(10,12),(11,13)]<br>
+[(0,1),(2,3),(4,6),(5,9),(10,11),(12,13)]<br>
+[(1,2),(3,5),(7,9),(8,10),(11,12)]<br>
+[(3,4),(5,6),(7,8),(9,10)]<br>
+[(2,3),(4,5),(6,7),(8,9),(10,11)]<br>
+[(5,6),(7,8)]<br>
+</p></td><td>
+Auto generated</td></tr>
+<tr id="N16L60D10WCS46"><td>Sorting network for 16 inputs, 60 CEs, 10 layers.<br>Worst case 46 swaps, 24.27781108 swaps on average.<br>
+<p class="mono">[(0,15),(1,14),(2,13),(3,12),(4,11),(5,10),(6,9),(7,8)]<br>
+[(0,7),(1,6),(2,5),(3,4),(8,15),(9,14),(10,13),(11,12)]<br>
+[(0,2),(1,3),(4,9),(5,7),(6,11),(8,10),(12,14),(13,15)]<br>
+[(0,1),(2,6),(3,5),(4,8),(7,11),(9,13),(10,12),(14,15)]<br>
+[(1,3),(2,4),(5,10),(6,9),(7,8),(11,13),(12,14)]<br>
+[(1,2),(3,4),(5,6),(9,10),(11,12),(13,14)]<br>
+[(2,3),(4,7),(8,11),(12,13)]<br>
+[(4,5),(6,7),(8,9),(10,11)]<br>
+[(3,4),(5,6),(7,8),(9,10),(11,12)]<br>
+[(6,7),(8,9)]<br>
+</p></td><td>
+Auto generated</td></tr>
+</table>
+<h3>References</h3>
+<table></table>
+<h3>History</h3>
+<table><tr><td>2024-05-01</td><td>Initial list</td></tr>
+</table>
+<p>Page updated on Wed May  1 16:49:01 2024</p>
+<p>See <a href="https://github.com/bertdobbelaere/SorterHunter">SorterHunter</a> repo for previous versions.</p>
+
+<script>
+let VERTGRID=32, DOTRADIUS=6, FINESPACING=16, GROUPSPACING=40, svgMaxWidth=800
+var sVERTGRID, sDOTRADIUS
+
+function connectInputsSVG(pair,xpos) {
+	let y1 = sVERTGRID/2.0+sVERTGRID*pair[0],y2 = sVERTGRID/2.0+sVERTGRID*pair[1]
+	return '<circle cx="'+xpos+'" cy="'+y1+'" r="'+sDOTRADIUS+'" fill="black"/>\n'+
+	'<circle cx="'+xpos+'" cy="'+y2+'" r="'+sDOTRADIUS+'" fill="black"/>\n'+
+	'<line x1="'+xpos+'" y1="'+y1+'" x2="'+xpos+'" y2="'+y2+'" style="stroke:rgb(0,0,0);stroke-width:1"/>\n'
+	}
+	
+function COG(plst) {
+	let n=2.0*plst.length, s=0
+	for (let p of plst)	{
+		s += p[0]+p[1]
+	}
+	return s/n
+	}
+
+function span(plst) {
+	let flatlist=[], h=-1000, l=1000
+	for (let p of plst) {
+		if(p[0]<l){l=p[0]}
+		if(p[0]>h){h=p[0]}
+		if(p[1]<l){l=p[1]}
+		if(p[1]>h){h=p[1]}
+	}
+	return h-l
+}
+
+function runVisualOptimizer(sublayers) {
+	let m=Math.trunc(sublayers.length/2)
+	sublayers.sort(function(a,b) {return span(a)-span(b);})
+	sublayers.sort(function(a,b) {return COG(a)-COG(b);})
+}
+
+function generateSVG(el) {
+	let txtval=el.childNodes[0].getElementsByClassName("mono")[0].innerText
+	let lines=txtval.split("]")
+	let out="", layers=[], ninputs=0
+	for (let l of lines){
+		let pairs=l.replace(/\[/g,"").trim().split(")")
+		if(l.length>=5)
+		{
+		let els=[]
+		for(let p of pairs){
+			let s=p.replace(/,\(/g,"").replace(/\(/g,"").split(",")
+			if(s.length>1)
+			{
+			let l=parseInt(s[0]), h=parseInt(s[1])
+			if(l>=ninputs){ninputs=l+1;}
+			if(h>=ninputs){ninputs=h+1;}
+			out+="["+l+"<"+h+"]"
+			els.push([l,h])
+			}
+		}
+		layers.push(els)
+		}
+	}
+	
+	let rvtext="", detailedlayers=[], nsublayers=0
+	
+	for (let l of layers) {
+		let sublayers=[], sectionuse=[]
+		let ls=l
+		ls.sort(function(a,b){let d = (a[1]-a[0])-(b[1]-b[0]), e = Math.abs(a[0]+a[1]-ninputs)-Math.abs(b[0]+b[1]-ninputs) ; if((d>0) || ((d==0) && (e>0))){return 1}else{return -1}})
+		for(let p of ls) {
+			let i=p[0], j=p[1]
+			let idx=0
+			while (idx<sublayers.length)
+			{
+				let fit=true
+				for (let s=i ; s<j ; s++) {
+					if (s in sectionuse[idx]){
+						fit=false
+					}
+				}
+				if (fit)
+					break
+				idx+=1
+			}
+			if (idx>= sublayers.length) {
+				sublayers.push([])
+				sectionuse.push({})
+				nsublayers+=1
+			}
+			sublayers[idx].push(p)
+			for (let s=i ; s<j ; s++) {
+				sectionuse[idx][s]=1
+				}
+		}
+		runVisualOptimizer(sublayers)
+		detailedlayers.push(sublayers)
+	}
+	let nwidth=layers.length*GROUPSPACING + nsublayers*FINESPACING
+	
+	let scale = 1
+	if (nwidth>svgMaxWidth) { scale = ((svgMaxWidth)/nwidth);}
+	
+	sVERTGRID = scale*VERTGRID
+	sDOTRADIUS = scale *DOTRADIUS
+	let sFINESPACING = scale*FINESPACING
+	let sGROUPSPACING = scale*GROUPSPACING
+	let width=scale*nwidth
+
+	rvtext+='<svg style="background-color: #FFF;" width="'+width+'" height="'+(sVERTGRID*ninputs)+'">\n'
+
+	for(let n=0; n<ninputs ; n++)
+	{
+		let y=sVERTGRID/2.0+n*sVERTGRID
+		rvtext+='<line x1="0" y1="'+y+'" x2="'+width+'" y2="'+y+'" style="stroke:rgb(0,0,0);stroke-width:1"/>\n'
+	}
+	
+	let xpos=sGROUPSPACING/2.0
+	for(let dl of detailedlayers) {
+		for(let sl of dl) {
+			for(let pair of sl) {
+				rvtext+=connectInputsSVG(pair,xpos)
+			}
+			xpos+=sFINESPACING
+		}
+		xpos+=sGROUPSPACING
+	}
+	rvtext+="</svg>\n"
+	
+	el.childNodes[1].innerHTML=rvtext
+	return rvtext
+}
+
+for(let nw of document.getElementById("Networks").getElementsByTagName("tr")) {	generateSVG(nw);}
+</script>
+</body></html>
