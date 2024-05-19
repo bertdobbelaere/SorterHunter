@@ -44,17 +44,18 @@ n  | S(n) previous upper bound | S(n) new upper bound
 (^) Compared to Van Voorhis (4,4) merge strategy  
 
 
-The results above were obtained while keeping also the depth (i.e. number of parallel operation steps) low. 
+The results above were obtained while keeping also the number of parallel operation steps - a.k.a. "depth" - low. 
 
 For 25 and 26 inputs, the program was able to reduce the optimal depth upper bound from 14 to 13 layers. A similar reduction to 15 layers was achieved for 34 inputs, and 17 layers for 42, 43 and 44 inputs.
 
-I committed the program to the public domain as inspiration source for further improvements on the subject of sorting networks.
+I committed the program to the public domain as inspiration source for further improvements on the subject of sorting networks.  
 
-See the [list of best performing sorting networks](https://bertdobbelaere.github.io/sorting_networks.html) for a compilation of smallest and fastest networks with up to 32 inputs (as far as known by the author), together with the known bounds in depth and size.  
-See the [extended list of sorting networks](https://bertdobbelaere.github.io/sorting_networks_extended.html) for an extension of this list to 64 inputs.
-These are two variants optimized for [average swap count](https://bertdobbelaere.github.io/sorting_networks_avgswaps.html) and [worst case swap count](https://bertdobbelaere.github.io/sorting_networks_maxswaps.html) that may give a performance boost on some target architectures.
-
-See the [list of median networks](https://bertdobbelaere.github.io/median_networks.html) for a list of evolved median selection networks. 
+The following lists of networks have been compiled for your convenience:
+* the [list of best performing sorting networks](https://bertdobbelaere.github.io/sorting_networks.html) keeps track of the smallest and fastest networks with up to 32 inputs (as far as known by the author), together with the known bounds for depth and size.  
+* the [extended list of sorting networks](https://bertdobbelaere.github.io/sorting_networks_extended.html) is a similar, larger table for up to 64 inputs.
+* sorting networks of smallest known size optimized for [average swap count](https://bertdobbelaere.github.io/sorting_networks_avgswaps.html) that may give a performance boost on some target architectures.
+* sorting networks of smallest known size optimized for [worst case swap count](https://bertdobbelaere.github.io/sorting_networks_maxswaps.html) regardless of the input.
+* a [list of median selection networks](https://bertdobbelaere.github.io/median_networks.html) that were optimized using SorterHunter.
 
 
 ## The program
