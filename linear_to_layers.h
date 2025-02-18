@@ -36,6 +36,7 @@
 
 #include "htypes.h"
 #include "ktop.h"
+#include <type_traits>
 
 
 namespace sh::tools {
@@ -126,11 +127,11 @@ namespace sh::tools {
     [[nodiscard]] inline std::vector<std::vector<Ece>> linear_to_layers(const std::vector<std::pair<int, int>>& input_lst) {
         std::vector<Ece> tmp;
         for (const std::pair<int, int>& swap : input_lst) {
-            Ece swap;
-            swap.first = swap.first;
-            swap.second = swap.second;
-            swap.colour = "black";
-            tmp.push_back(std::move(swap));
+            Ece swap2;
+            swap2.first = swap.first;
+            swap2.second = swap.second;
+            swap2.colour = "black";
+            tmp.push_back(std::move(swap2));
         }
         return linear_to_layers(tmp);
     }

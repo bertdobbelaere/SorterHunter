@@ -96,7 +96,7 @@ namespace sh {
 			const auto linear = sh::tools::layers_to_linear_only_colour(swap_network2, "black");
 
 			for (const sh::tools::Ece& swap : linear) {
-				network.push_back(Pair_t(swap.first, swap.second));
+				network.push_back(Pair_t(static_cast<ChannelT>(swap.first), static_cast<ChannelT>(swap.second)));
 			}
 			return network;
 		}
@@ -108,12 +108,12 @@ namespace sh {
 			Network_t network;
 			for (const auto& layer : sn1) {
 				for (const auto& swap : layer) {
-					network.push_back(Pair_t(swap.first, swap.second));
+					network.push_back(Pair_t(static_cast<ChannelT>(swap.first), static_cast<ChannelT>(swap.second)));
 				}
 			}
 			for (const auto& layer : sn2) {
 				for (const auto& swap : layer) {
-					network.push_back(Pair_t(swap.first + channels1, swap.second + channels1));
+					network.push_back(Pair_t(static_cast<ChannelT>(swap.first + channels1), static_cast<ChannelT>(swap.second + channels1)));
 				}
 			}
 			return network;
@@ -124,7 +124,7 @@ namespace sh {
 			Network_t network;
 			for (const auto& layer : swap_network) {
 				for (const auto& swap : layer) {
-					network.push_back(Pair_t(swap.first, swap.second));
+					network.push_back(Pair_t(static_cast<ChannelT>(swap.first), static_cast<ChannelT>(swap.second)));
 				}
 			}
 			return network;

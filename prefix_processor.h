@@ -69,13 +69,13 @@ namespace sh {
 		{
 			state::alphabet.clear();
 			for (int i = 0; i < (N - 1); i++) {
-				const ChannelT jsym = N - 1 - i;
+				const ChannelT jsym = static_cast<ChannelT>(N - 1 - i);
 				for (int j = i + 1; j < N; j++) {
-					const ChannelT isym = N - 1 - j;
+					const ChannelT isym = static_cast<ChannelT>(N - 1 - j);
 
 					if (!use_symmetry || (isym > i) || ((isym == i) && (jsym >= j)))
 					{
-						state::alphabet.push_back(Pair_t(i, j));
+						state::alphabet.push_back(Pair_t(static_cast<ChannelT>(i), static_cast<ChannelT>(j)));
 					}
 				}
 			}

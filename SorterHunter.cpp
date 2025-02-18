@@ -119,7 +119,7 @@ namespace sh {
 
 				if (!state::use_symmetry || (isym > i) || ((isym == i) && (jsym >= j)))
 				{
-					state::alphabet.push_back(Pair_t(i, j));
+					state::alphabet.push_back(Pair_t(static_cast<ChannelT>(i), static_cast<ChannelT>(j)));
 				}
 			}
 		}
@@ -342,7 +342,7 @@ namespace sh {
 		case 1:
 			if (newpairs.size() > 0)   // Removal of random pair from list
 			{
-				u32 a = RANDIDX(newpairs);
+				u32 a = static_cast<u32>(RANDIDX(newpairs));
 				newpairs.erase(newpairs.begin() + a);
 				applied = mtype;
 			}
@@ -350,8 +350,8 @@ namespace sh {
 		case 2:
 			if (newpairs.size() > 1) // Swap two pairs at random positions in list
 			{
-				u32 a = RANDIDX(newpairs);
-				u32 b = RANDIDX(newpairs);
+				u32 a = static_cast<u32>(RANDIDX(newpairs));
+				u32 b = static_cast<u32>(RANDIDX(newpairs));
 				if (a > b) { u32 z = a; a = b; b = z; }
 				if (newpairs[a] != newpairs[b])
 				{
@@ -393,7 +393,7 @@ namespace sh {
 		case 3:
 			if (newpairs.size() > 0)  // Replace a pair at a random position with another random pair
 			{
-				u32 a = RANDIDX(newpairs);
+				u32 a = static_cast<u32>(RANDIDX(newpairs));
 				Pair_t p = RANDELEM(state::alphabet);
 				if (newpairs[a] != p)
 				{
@@ -405,8 +405,8 @@ namespace sh {
 		case 4:
 			if (newpairs.size() > 1) // Cross two pairs at random positions in list
 			{
-				u32 a = RANDIDX(newpairs);
-				u32 b = RANDIDX(newpairs);
+				u32 a = static_cast<u32>(RANDIDX(newpairs));
+				u32 b = static_cast<u32>(RANDIDX(newpairs));
 				u32 alo = static_cast<u32>(newpairs[a].lo);
 				u32 ahi = static_cast<u32>(newpairs[a].hi);
 				u32 blo = static_cast<u32>(newpairs[b].lo);
@@ -417,10 +417,10 @@ namespace sh {
 					u32 r2 = state::mtRand() % 2;
 					u32 x = r2 ? bhi : blo;
 					u32 y = r2 ? blo : bhi;
-					newpairs[a].lo = std::min(alo, x);
-					newpairs[a].hi = std::max(alo, x);
-					newpairs[b].lo = std::min(ahi, y);
-					newpairs[b].hi = std::max(ahi, y);
+					newpairs[a].lo = static_cast<ChannelT>(std::min(alo, x));
+					newpairs[a].hi = static_cast<ChannelT>(std::max(alo, x));
+					newpairs[b].lo = static_cast<ChannelT>(std::min(ahi, y));
+					newpairs[b].hi = static_cast<ChannelT>(std::max(ahi, y));
 					applied = mtype;
 				}
 			}
@@ -428,7 +428,7 @@ namespace sh {
 		case 5:
 			if (newpairs.size() > 1) // Swap neighbouring intersecting pairs - special case of type r=2.
 			{
-				u32 a = RANDIDX(newpairs);
+				u32 a = static_cast<u32>(RANDIDX(newpairs));
 				u8 alo = newpairs[a].lo;
 				u8 ahi = newpairs[a].hi;
 				for (u32 b = a + 1; b < newpairs.size(); b++)
@@ -452,7 +452,7 @@ namespace sh {
 		case 6:
 			if (newpairs.size() > 0) // Change one half of a pair - special case of type r=3.
 			{
-				u32 a = RANDIDX(newpairs);
+				u32 a = static_cast<u32>(RANDIDX(newpairs));
 				Pair_t p = newpairs[a];
 				Pair_t q(0, 0);
 				do {
@@ -788,15 +788,9 @@ namespace sh {
 	}
 }
 
-/**
- * SorterHunter main routine
- */
-
 using namespace sh;
 
-
-int main(int argc, char* argv[])
-{
+void latex_experiments() {
 	if (false) {
 		const int k = 8;
 		const int channels = 32;
@@ -804,7 +798,7 @@ int main(int argc, char* argv[])
 		const auto& swap_network = get_sort_network(channels);
 		const std::string latex_name1 = "sn_" + std::to_string(channels) + ".tex";
 		sh::tools::write_latex(swap_network, channels, latex_name1);
-		
+
 		const auto unrelated_groups = sh::tools::get_unrelated_groups(k, channels);
 		const auto swap_network2 = sh::tools::annotate_unnecessary(unrelated_groups, sh::tools::convert_to_ece(swap_network));
 		const std::string latex_name2 = "sn_" + std::to_string(k) + "top" + std::to_string(channels) + ".tex";
@@ -816,8 +810,6 @@ int main(int argc, char* argv[])
 		sh::tools::write_latex(swap_network3, channels, latex_name3);
 
 		std::cout << sh::tools::linear_to_string(linear);
-
-		return 0;
 	}
 
 	if (false) {
@@ -827,7 +819,7 @@ int main(int argc, char* argv[])
 		const std::string latex_name1 = "sn_" + std::to_string(channels) + ".tex";
 		sh::tools::write_latex(swap_network, channels, latex_name1);
 
-		for (int k = 1; k < channels; ++k) 
+		for (int k = 1; k < channels; ++k)
 		{
 			const auto unrelated_groups = sh::tools::get_unrelated_groups(k, channels);
 			const auto swap_network2 = sh::tools::annotate_unnecessary(unrelated_groups, sh::tools::convert_to_ece(swap_network));
@@ -839,7 +831,6 @@ int main(int argc, char* argv[])
 			const std::string latex_name3 = "sn_" + std::to_string(k) + "top" + std::to_string(channels) + "X.tex";
 			sh::tools::write_latex(swap_network3, channels, latex_name3);
 		}
-		return 0;
 	}
 
 	if (true) {
@@ -848,10 +839,20 @@ int main(int argc, char* argv[])
 		const auto& swap_network = get_sort_network(channels);
 		const std::string latex_name1 = "sn_" + std::to_string(channels) + ".tex";
 		sh::tools::write_latex(swap_network, channels, latex_name1);
-
-		return 0;
 	}
+}
 
+/**
+ * SorterHunter main routine
+ */
+
+int main(int argc, char* argv[])
+{
+
+	// experiments with writing latex networks
+	if (false) {
+		latex_experiments();
+	}
 
 	// Handle validity of command line options - extremely simple
 	if (argc != 2)
