@@ -38,7 +38,7 @@ PrefixType = 3
 
 # Size of greedy prefix
 # Only relevant if PrefixType = 2 or 3
-GreedyPrefixSize = 550
+GreedyPrefixSize = 750
 
 # Specify fixed prefix as comma separated list of pairs. Inputs are 0 based.
 # Only relevant if PrefixType = 1 or 3

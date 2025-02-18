@@ -489,7 +489,7 @@ namespace sh {
 				std::cout << " {'N':" << N << ",'L':" << nw.size() << ",'D':" << depth << ",'sw':'" << VERSION << "','ESC':" << state::EscapeRate << ",'Prefix':" << prefix.size() << ",'Postfix':" << state::postfix.size() << ",'nw':" << std::endl;
 				//printnw(nw);
 
-				constexpr bool print_layers = true;
+				constexpr bool print_layers = false;
 
 				if (print_layers) {					
 					constexpr bool remove_prefix = false;
@@ -841,6 +841,17 @@ int main(int argc, char* argv[])
 		}
 		return 0;
 	}
+
+	if (true) {
+		const int channels = 64;
+
+		const auto& swap_network = get_sort_network(channels);
+		const std::string latex_name1 = "sn_" + std::to_string(channels) + ".tex";
+		sh::tools::write_latex(swap_network, channels, latex_name1);
+
+		return 0;
+	}
+
 
 	// Handle validity of command line options - extremely simple
 	if (argc != 2)
