@@ -1,0 +1,30 @@
+@echo off
+set "key=B"
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%1.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%2.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%3.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%4.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%5.txt" 
+
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%6.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%7.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%8.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%9.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%10.txt" 
+
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%11.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%12.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%13.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%14.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%15.txt" 
+
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%16.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%17.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%18.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%19.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%20.txt" 
+
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%21.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%22.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%23.txt" 
+start .\x64\Release\SorterHunter.Main.exe ..\sample_config_8top64.txt > "8top64_%key%24.txt" 
